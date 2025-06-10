@@ -1,0 +1,650 @@
+{% extends "base.html" %}
+
+{% block title %}Taking Assessment - Hirica{% endblock %}
+
+{% block head %}
+<style>
+/* Full-screen assessment styles */
+.assessment-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: var(--bs-dark);
+    z-index: 9999;
+    overflow: hidden;
+}
+
+.assessment-content {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.assessment-header {
+    background: rgba(0,0,0,0.9);
+    padding: 1rem;
+    border-bottom: 1px solid var(--bs-border-color);
+    flex-shrink: 0;
+}
+
+.assessment-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem;
+}
+
+.assessment-footer {
+    background: rgba(0,0,0,0.9);
+    padding: 1rem;
+    border-top: 1px solid var(--bs-border-color);
+    flex-shrink: 0;
+}
+
+.timer-display {
+    font-family: 'Courier New', monospace;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.timer-warning {
+    color: #ffc107 !important;
+}
+
+.timer-danger {
+    color: #dc3545 !important;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.question-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.question-card {
+    background: var(--bs-gray-900);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.question-rules {
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid #ffc107;
+    border-radius: 0.25rem;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.code-editor {
+    background: #1e1e1e;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.25rem;
+    font-family: 'Courier New', monospace;
+    color: #fff;
+    padding: 1rem;
+    min-height: 200px;
+    resize: vertical;
+}
+
+.webcam-feed {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 200px;
+    height: 150px;
+    background: #000;
+    border: 2px solid var(--bs-primary);
+    border-radius: 0.5rem;
+    z-index: 10000;
+}
+
+.violation-alert {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #dc3545;
+    color: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    z-index: 10001;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="assessment-fullscreen" id="assessmentContainer">
+    <div class="assessment-content">
+        <!-- Assessment Header -->
+        <div class="assessment-header">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <div class="assessment-info">
+                            <h6 class="text-white mb-0">{{ test_result.assessment.title }}</h6>
+                            <small class="text-light-75">{{ test_result.application.job.title }}</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="progress-indicator">
+                            <span class="text-light-75">Question </span>
+                            <span class="text-white fw-bold" id="currentQuestion">1</span>
+                            <span class="text-light-75"> of </span>
+                            <span class="text-white fw-bold" id="totalQuestions">{{ test_result.assessment.get_questions_list()|length }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="timer-container">
+                            <i class="fas fa-clock me-2"></i>
+                            <span class="timer-display" id="timerDisplay">{{ test_result.assessment.time_limit }}:00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assessment Body -->
+        <div class="assessment-body">
+            <div class="question-container">
+                <form id="assessmentForm" method="POST" action="{{ url_for('main.submit_assessment', test_result_id=test_result.id) }}">
+                    <!-- Questions will be loaded here -->
+                    <div id="questionsContainer">
+                        {% for question in test_result.assessment.get_questions_list() %}
+                        <div class="question-card" data-question-id="{{ question.id }}" style="display: {% if loop.first %}block{% else %}none{% endif %};">
+                            <!-- Question Rules -->
+                            <div class="question-rules">
+                                <small class="text-warning">
+                                    <i class="fas fa-shield-alt me-1"></i>
+                                    <strong>Active Rules:</strong>
+                                    {% if not question.rules.copy_paste_allowed %}Copy/Paste Disabled{% endif %}
+                                    {% if not question.rules.tab_switching_allowed %} • Tab Switching Disabled{% endif %}
+                                    {% if question.rules.webcam_required %} • Webcam Required{% endif %}
+                                    {% if question.rules.fullscreen_required %} • Full-screen Required{% endif %}
+                                </small>
+                            </div>
+
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Question {{ loop.index }}</h5>
+                                    <div class="question-timer">
+                                        <i class="fas fa-hourglass-half me-1"></i>
+                                        <span id="questionTimer_{{ question.id }}">{{ question.time_limit }}:00</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card-body">
+                                <div class="question-content mb-4">
+                                    <h6 class="question-text">{{ question.question }}</h6>
+                                </div>
+
+                                {% if question.type == 'multiple_choice' %}
+                                <div class="question-options">
+                                    {% for option in question.options %}
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" 
+                                               name="question_{{ question.id }}" 
+                                               id="q{{ question.id }}_{{ loop.index0 }}" 
+                                               value="{{ loop.index0 }}">
+                                        <label class="form-check-label" for="q{{ question.id }}_{{ loop.index0 }}">
+                                            {{ option }}
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+
+                                {% elif question.type == 'text' %}
+                                <div class="question-text-input">
+                                    <textarea class="form-control" 
+                                              name="question_{{ question.id }}" 
+                                              rows="6" 
+                                              placeholder="Type your answer here..."
+                                              {% if not question.rules.copy_paste_allowed %}
+                                              onpaste="return false" 
+                                              oncontextmenu="return false"
+                                              {% endif %}></textarea>
+                                </div>
+
+                                {% elif question.type == 'code' %}
+                                <div class="question-code-input">
+                                    <label class="form-label">Write your code solution:</label>
+                                    <textarea class="form-control code-editor" 
+                                              name="question_{{ question.id }}" 
+                                              rows="12" 
+                                              placeholder="// Write your code here..."
+                                              spellcheck="false"
+                                              {% if not question.rules.copy_paste_allowed %}
+                                              onpaste="return false" 
+                                              oncontextmenu="return false"
+                                              {% endif %}></textarea>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Projects Section -->
+                    {% if test_result.assessment.get_projects_list() %}
+                    {% for project in test_result.assessment.get_projects_list() %}
+                    {% if project.type == 'short' %}
+                    <div class="question-card" data-question-id="project_{{ loop.index }}" style="display: none;">
+                        <div class="card-header">
+                            <h5 class="mb-0">{{ project.title }}</h5>
+                            <div class="project-timer">
+                                <i class="fas fa-hourglass-half me-1"></i>
+                                <span id="projectTimer_{{ loop.index }}">{{ project.time_limit }}:00</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card-body">
+                            <div class="project-description mb-4">
+                                <h6>Project Description:</h6>
+                                <p class="text-light-75">{{ project.description }}</p>
+                                
+                                {% if project.requirements %}
+                                <h6 class="mt-3">Requirements:</h6>
+                                <p class="text-light-75">{{ project.requirements }}</p>
+                                {% endif %}
+                                
+                                {% if project.deliverables %}
+                                <h6 class="mt-3">Deliverables:</h6>
+                                <p class="text-light-75">{{ project.deliverables }}</p>
+                                {% endif %}
+                            </div>
+
+                            <div class="project-workspace">
+                                <label class="form-label">Project Solution:</label>
+                                <textarea class="form-control code-editor" 
+                                          name="project_{{ loop.index }}" 
+                                          rows="15" 
+                                          placeholder="Develop your solution here..."
+                                          spellcheck="false"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+
+        <!-- Assessment Footer -->
+        <div class="assessment-footer">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="violation-count">
+                            <small class="text-light-75">
+                                Violations: <span class="text-warning fw-bold" id="violationCount">0</span>
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="navigation-buttons">
+                            <button type="button" class="btn btn-outline-light me-2" id="prevBtn" onclick="previousQuestion()" disabled>
+                                <i class="fas fa-chevron-left me-1"></i>Previous
+                            </button>
+                            <button type="button" class="btn btn-primary me-2" id="nextBtn" onclick="nextQuestion()">
+                                Next<i class="fas fa-chevron-right ms-1"></i>
+                            </button>
+                            <button type="button" class="btn btn-success" id="submitBtn" onclick="submitAssessment()" style="display: none;">
+                                <i class="fas fa-check me-1"></i>Submit Assessment
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Webcam Feed -->
+    <video id="webcamFeed" class="webcam-feed" autoplay muted></video>
+
+    <!-- Violation Alert -->
+    <div id="violationAlert" class="violation-alert" style="display: none;">
+        <h5><i class="fas fa-exclamation-triangle me-2"></i>Warning!</h5>
+        <p id="violationMessage"></p>
+        <button class="btn btn-light" onclick="acknowledgeViolation()">I Understand</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/anti-cheat.js') }}"></script>
+<script src="{{ url_for('static', filename='js/assessment.js') }}"></script>
+<script>
+// Assessment variables
+let currentQuestionIndex = 0;
+let totalQuestions = {{ test_result.assessment.get_questions_list()|length }};
+let totalTime = {{ test_result.assessment.time_limit }} * 60; // Convert to seconds
+let timeRemaining = totalTime;
+let violationCount = 0;
+let assessmentStartTime = Date.now();
+
+// Question data
+const questions = {{ test_result.assessment.get_questions_list()|tojson }};
+const testResultId = {{ test_result.id }};
+
+// Initialize assessment
+document.addEventListener('DOMContentLoaded', function() {
+    initializeAssessment();
+});
+
+function initializeAssessment() {
+    // Enter full-screen mode
+    enterFullscreen();
+    
+    // Initialize webcam
+    initializeWebcam();
+    
+    // Start timer
+    startTimer();
+    
+    // Initialize anti-cheat monitoring
+    initializeAntiCheat(testResultId);
+    
+    // Update UI
+    updateQuestionDisplay();
+    
+    // Prevent context menu and keyboard shortcuts
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', handleKeyDown);
+    
+    // Monitor window focus
+    window.addEventListener('blur', handleWindowBlur);
+    window.addEventListener('focus', handleWindowFocus);
+    
+    // Auto-save answers periodically
+    setInterval(autoSaveAnswers, 30000); // Every 30 seconds
+}
+
+function enterFullscreen() {
+    const element = document.getElementById('assessmentContainer');
+    
+    if (element.requestFullscreen) {
+        element.requestFullscreen();
+    } else if (element.webkitRequestFullscreen) {
+        element.webkitRequestFullscreen();
+    } else if (element.mozRequestFullScreen) {
+        element.mozRequestFullScreen();
+    } else if (element.msRequestFullscreen) {
+        element.msRequestFullscreen();
+    }
+    
+    // Monitor fullscreen changes
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+}
+
+function handleFullscreenChange() {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement && 
+        !document.mozFullScreenElement && !document.msFullscreenElement) {
+        logViolation('fullscreen_exit', 'Exited full-screen mode');
+    }
+}
+
+async function initializeWebcam() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { width: 200, height: 150 }, 
+            audio: false 
+        });
+        
+        const video = document.getElementById('webcamFeed');
+        video.srcObject = stream;
+        
+        // Start face detection
+        startFaceDetection(video);
+        
+    } catch (error) {
+        console.error('Webcam initialization failed:', error);
+        logViolation('webcam_disconnect', 'Failed to initialize webcam');
+    }
+}
+
+function startTimer() {
+    const timerInterval = setInterval(() => {
+        timeRemaining--;
+        updateTimerDisplay();
+        
+        if (timeRemaining <= 0) {
+            clearInterval(timerInterval);
+            autoSubmitAssessment();
+        }
+    }, 1000);
+}
+
+function updateTimerDisplay() {
+    const minutes = Math.floor(timeRemaining / 60);
+    const seconds = timeRemaining % 60;
+    const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    const timerElement = document.getElementById('timerDisplay');
+    timerElement.textContent = display;
+    
+    // Change color based on time remaining
+    if (timeRemaining <= 300) { // 5 minutes
+        timerElement.className = 'timer-display timer-danger';
+    } else if (timeRemaining <= 900) { // 15 minutes
+        timerElement.className = 'timer-display timer-warning';
+    } else {
+        timerElement.className = 'timer-display';
+    }
+}
+
+function updateQuestionDisplay() {
+    // Hide all questions
+    document.querySelectorAll('.question-card').forEach(card => {
+        card.style.display = 'none';
+    });
+    
+    // Show current question
+    const questions = document.querySelectorAll('.question-card');
+    if (questions[currentQuestionIndex]) {
+        questions[currentQuestionIndex].style.display = 'block';
+    }
+    
+    // Update progress
+    document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
+    
+    // Update navigation buttons
+    document.getElementById('prevBtn').disabled = currentQuestionIndex === 0;
+    
+    if (currentQuestionIndex === questions.length - 1) {
+        document.getElementById('nextBtn').style.display = 'none';
+        document.getElementById('submitBtn').style.display = 'inline-block';
+    } else {
+        document.getElementById('nextBtn').style.display = 'inline-block';
+        document.getElementById('submitBtn').style.display = 'none';
+    }
+}
+
+function nextQuestion() {
+    if (currentQuestionIndex < totalQuestions - 1) {
+        currentQuestionIndex++;
+        updateQuestionDisplay();
+        autoSaveAnswers();
+    }
+}
+
+function previousQuestion() {
+    if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        updateQuestionDisplay();
+    }
+}
+
+function handleKeyDown(e) {
+    // Prevent F12, Ctrl+Shift+I, Ctrl+U, etc.
+    if (e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+        (e.ctrlKey && e.key === 'u') ||
+        (e.ctrlKey && e.key === 's') ||
+        (e.altKey && e.key === 'Tab')) {
+        e.preventDefault();
+        logViolation('inspect', 'Attempted to open developer tools');
+        return false;
+    }
+    
+    // Prevent Alt+Tab
+    if (e.altKey && e.key === 'Tab') {
+        e.preventDefault();
+        logViolation('tab_switch', 'Attempted to switch applications');
+        return false;
+    }
+}
+
+function handleWindowBlur() {
+    logViolation('focus_loss', 'Window lost focus');
+}
+
+function handleWindowFocus() {
+    // Window regained focus
+    console.log('Window regained focus');
+}
+
+function logViolation(type, description) {
+    violationCount++;
+    document.getElementById('violationCount').textContent = violationCount;
+    
+    // Send violation to server
+    fetch('/api/anti-cheat/log', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            test_result_id: testResultId,
+            violation_type: type,
+            description: description
+        })
+    });
+    
+    // Show violation alert
+    showViolationAlert(description);
+    
+    // Check if maximum violations reached
+    if (violationCount >= 3) {
+        showViolationAlert('Maximum violations reached. Assessment will be terminated.');
+        setTimeout(() => {
+            autoSubmitAssessment();
+        }, 5000);
+    }
+}
+
+function showViolationAlert(message) {
+    document.getElementById('violationMessage').textContent = message;
+    document.getElementById('violationAlert').style.display = 'block';
+}
+
+function acknowledgeViolation() {
+    document.getElementById('violationAlert').style.display = 'none';
+}
+
+function autoSaveAnswers() {
+    const formData = new FormData(document.getElementById('assessmentForm'));
+    formData.append('auto_save', 'true');
+    
+    fetch('/api/assessment/auto-save', {
+        method: 'POST',
+        body: formData
+    }).catch(error => {
+        console.error('Auto-save failed:', error);
+    });
+}
+
+function submitAssessment() {
+    if (confirm('Are you sure you want to submit your assessment? This action cannot be undone.')) {
+        document.getElementById('assessmentForm').submit();
+    }
+}
+
+function autoSubmitAssessment() {
+    alert('Time is up! Your assessment will be submitted automatically.');
+    document.getElementById('assessmentForm').submit();
+}
+
+// Face detection (simplified implementation)
+function startFaceDetection(video) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 200;
+    canvas.height = 150;
+    
+    let lastFaceDetection = Date.now();
+    let consecutiveNoFace = 0;
+    
+    function detectFace() {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        
+        // Simplified face detection - in production, use a proper face detection library
+        const hasMotion = detectMotion(imageData);
+        
+        if (hasMotion) {
+            lastFaceDetection = Date.now();
+            consecutiveNoFace = 0;
+        } else {
+            consecutiveNoFace++;
+            
+            if (consecutiveNoFace > 30) { // 30 frames without motion
+                logViolation('no_face', 'No face detected for extended period');
+                consecutiveNoFace = 0;
+            }
+        }
+        
+        setTimeout(detectFace, 1000); // Check every second
+    }
+    
+    video.addEventListener('loadedmetadata', detectFace);
+}
+
+function detectMotion(imageData) {
+    // Simplified motion detection
+    // In production, implement proper face detection using libraries like face-api.js
+    const data = imageData.data;
+    let motion = 0;
+    
+    for (let i = 0; i < data.length; i += 4) {
+        const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        if (brightness > 50) motion++;
+    }
+    
+    return motion > 1000; // Threshold for detecting presence
+}
+
+// Heartbeat to server
+setInterval(() => {
+    fetch('/api/test/heartbeat', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            test_result_id: testResultId,
+            current_question: currentQuestionIndex,
+            time_remaining: timeRemaining
+        })
+    });
+}, 10000); // Every 10 seconds
+
+// Prevent page unload
+window.addEventListener('beforeunload', function(e) {
+    e.preventDefault();
+    e.returnValue = '';
+});
+</script>
+{% endblock %}

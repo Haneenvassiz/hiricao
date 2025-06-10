@@ -1,0 +1,516 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - Hirica{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="container">
+        <!-- Header -->
+        <div class="profile-header mb-4">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="page-title">
+                        <i class="fas fa-user-edit me-3"></i>My Profile
+                    </h1>
+                    <p class="text-light-75 mb-0">Keep your profile updated to attract the best opportunities</p>
+                </div>
+                <div class="col-auto">
+                    <a href="{{ url_for('main.jobseeker_dashboard') }}" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" class="profile-form">
+            <div class="row">
+                <!-- Main Profile Info -->
+                <div class="col-lg-8">
+                    <!-- Basic Information -->
+                    <div class="dashboard-card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-user me-2"></i>Basic Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="first_name" class="form-label">First Name *</label>
+                                    <input type="text" class="form-control" id="first_name" name="first_name" 
+                                           value="{{ current_user.first_name }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="last_name" class="form-label">Last Name *</label>
+                                    <input type="text" class="form-control" id="last_name" name="last_name" 
+                                           value="{{ current_user.last_name }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="email" class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" id="email" name="email" 
+                                           value="{{ current_user.email }}" readonly>
+                                    <div class="form-text">Email cannot be changed. Contact support if needed.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="phone" class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone" 
+                                           value="{{ current_user.jobseeker_profile.phone if current_user.jobseeker_profile else '' }}"
+                                           placeholder="+1 (555) 123-4567">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Professional Information -->
+                    <div class="dashboard-card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-briefcase me-2"></i>Professional Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="current_position" class="form-label">Current Position</label>
+                                    <input type="text" class="form-control" id="current_position" name="current_position" 
+                                           value="{{ current_user.jobseeker_profile.current_position if current_user.jobseeker_profile else '' }}"
+                                           placeholder="e.g., Software Engineer">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="experience_years" class="form-label">Years of Experience</label>
+                                    <select class="form-select" id="experience_years" name="experience_years">
+                                        <option value="">Select experience</option>
+                                        {% for i in range(0, 21) %}
+                                        <option value="{{ i }}" 
+                                            {% if current_user.jobseeker_profile and current_user.jobseeker_profile.experience_years == i %}selected{% endif %}>
+                                            {% if i == 0 %}Less than 1 year{% elif i == 20 %}20+ years{% else %}{{ i }} year{{ 's' if i != 1 else '' }}{% endif %}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label for="location" class="form-label">Location</label>
+                                    <input type="text" class="form-control" id="location" name="location" 
+                                           value="{{ current_user.jobseeker_profile.location if current_user.jobseeker_profile else '' }}"
+                                           placeholder="City, State or Country">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Skills -->
+                    <div class="dashboard-card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-cogs me-2"></i>Skills & Technologies
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="skills_input" class="form-label">Add Skills</label>
+                                <div class="skills-input-container">
+                                    <input type="text" class="form-control" id="skills_input" 
+                                           placeholder="Type a skill and press Enter">
+                                    <div class="skills-tags mt-2" id="skills_tags"></div>
+                                </div>
+                                <div class="form-text">Add relevant skills, technologies, and tools you're proficient in.</div>
+                            </div>
+
+                            <!-- Popular Skills Suggestions -->
+                            <div class="mb-3">
+                                <label class="form-label">Popular Skills (click to add)</label>
+                                <div class="popular-skills">
+                                    <span class="skill-suggestion" data-skill="JavaScript">JavaScript</span>
+                                    <span class="skill-suggestion" data-skill="Python">Python</span>
+                                    <span class="skill-suggestion" data-skill="React">React</span>
+                                    <span class="skill-suggestion" data-skill="Node.js">Node.js</span>
+                                    <span class="skill-suggestion" data-skill="SQL">SQL</span>
+                                    <span class="skill-suggestion" data-skill="AWS">AWS</span>
+                                    <span class="skill-suggestion" data-skill="Docker">Docker</span>
+                                    <span class="skill-suggestion" data-skill="Git">Git</span>
+                                    <span class="skill-suggestion" data-skill="Machine Learning">Machine Learning</span>
+                                    <span class="skill-suggestion" data-skill="Data Analysis">Data Analysis</span>
+                                </div>
+                            </div>
+
+                            <!-- Hidden input for skills -->
+                            <textarea name="skills" id="skills_hidden" style="display: none;">{{ current_user.jobseeker_profile.skills if current_user.jobseeker_profile else '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Education -->
+                    <div class="dashboard-card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-graduation-cap me-2"></i>Education
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="education" class="form-label">Education Details</label>
+                                <textarea class="form-control" id="education" name="education" rows="4" 
+                                          placeholder="• Bachelor's Degree in Computer Science - University Name (Year)&#10;• Relevant certifications&#10;• Online courses">{{ current_user.jobseeker_profile.education if current_user.jobseeker_profile else '' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Social Links -->
+                    <div class="dashboard-card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-link me-2"></i>Professional Links
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="linkedin_url" class="form-label">LinkedIn Profile</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fab fa-linkedin"></i>
+                                        </span>
+                                        <input type="url" class="form-control" id="linkedin_url" name="linkedin_url" 
+                                               value="{{ current_user.jobseeker_profile.linkedin_url if current_user.jobseeker_profile else '' }}"
+                                               placeholder="https://linkedin.com/in/yourprofile">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="github_url" class="form-label">GitHub Profile</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fab fa-github"></i>
+                                        </span>
+                                        <input type="url" class="form-control" id="github_url" name="github_url" 
+                                               value="{{ current_user.jobseeker_profile.github_url if current_user.jobseeker_profile else '' }}"
+                                               placeholder="https://github.com/yourusername">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="col-lg-4">
+                    <!-- Profile Picture -->
+                    <div class="dashboard-card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-image me-2"></i>Profile Picture
+                            </h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <div class="profile-picture-container">
+                                <div class="profile-picture">
+                                    <i class="fas fa-user-circle"></i>
+                                </div>
+                                <p class="text-light-75 mt-3">Upload a professional photo to make your profile stand out</p>
+                                <button type="button" class="btn btn-outline-primary">
+                                    <i class="fas fa-camera me-2"></i>Upload Photo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resume Upload -->
+                    <div class="dashboard-card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-file-pdf me-2"></i>Resume
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if current_user.jobseeker_profile and current_user.jobseeker_profile.resume_filename %}
+                            <div class="current-resume mb-3">
+                                <div class="file-info">
+                                    <i class="fas fa-file-pdf text-danger me-2"></i>
+                                    <span>Current Resume</span>
+                                </div>
+                                <div class="file-actions">
+                                    <a href="{{ url_for('main.uploaded_file', filename=current_user.jobseeker_profile.resume_filename) }}" 
+                                       target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </a>
+                                    <a href="{{ url_for('main.uploaded_file', filename=current_user.jobseeker_profile.resume_filename) }}" 
+                                       download class="btn btn-sm btn-outline-info">
+                                        <i class="fas fa-download me-1"></i>Download
+                                    </a>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="resume-upload">
+                                <label for="resume" class="form-label">
+                                    {% if current_user.jobseeker_profile and current_user.jobseeker_profile.resume_filename %}
+                                    Update Resume
+                                    {% else %}
+                                    Upload Resume *
+                                    {% endif %}
+                                </label>
+                                <input type="file" class="form-control" id="resume" name="resume" 
+                                       accept=".pdf,.doc,.docx">
+                                <div class="form-text">
+                                    Accepted formats: PDF, DOC, DOCX (Max 5MB)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Completion -->
+                    <div class="dashboard-card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-pie me-2"></i>Profile Completion
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="profile-completion">
+                                <div class="completion-percentage">
+                                    <div class="percentage-circle" id="completionCircle">
+                                        <span class="percentage-text" id="completionText">0%</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="completion-checklist mt-3">
+                                    <div class="checklist-item" data-field="basic_info">
+                                        <i class="fas fa-check-circle text-success"></i>
+                                        <span>Basic Information</span>
+                                    </div>
+                                    <div class="checklist-item" data-field="resume">
+                                        <i class="fas fa-circle text-light-50"></i>
+                                        <span>Resume Upload</span>
+                                    </div>
+                                    <div class="checklist-item" data-field="skills">
+                                        <i class="fas fa-circle text-light-50"></i>
+                                        <span>Skills & Technologies</span>
+                                    </div>
+                                    <div class="checklist-item" data-field="experience">
+                                        <i class="fas fa-circle text-light-50"></i>
+                                        <span>Work Experience</span>
+                                    </div>
+                                    <div class="checklist-item" data-field="education">
+                                        <i class="fas fa-circle text-light-50"></i>
+                                        <span>Education Details</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save me-2"></i>Save Profile
+                        </button>
+                        <button type="button" class="btn btn-outline-light btn-lg ms-3" onclick="previewProfile()">
+                            <i class="fas fa-eye me-2"></i>Preview Profile
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Skills management
+let selectedSkills = [];
+
+// Initialize skills from existing data
+function initializeSkills() {
+    const skillsData = document.getElementById('skills_hidden').value;
+    if (skillsData) {
+        try {
+            selectedSkills = JSON.parse(skillsData) || [];
+        } catch (e) {
+            selectedSkills = skillsData.split(',').map(s => s.trim()).filter(s => s);
+        }
+    }
+    updateSkillsDisplay();
+}
+
+function addSkill(skill) {
+    if (!selectedSkills.includes(skill) && skill.trim() !== '') {
+        selectedSkills.push(skill);
+        updateSkillsDisplay();
+        updateProfileCompletion();
+    }
+}
+
+function removeSkill(skill) {
+    selectedSkills = selectedSkills.filter(s => s !== skill);
+    updateSkillsDisplay();
+    updateProfileCompletion();
+}
+
+function updateSkillsDisplay() {
+    const container = document.getElementById('skills_tags');
+    container.innerHTML = '';
+    
+    selectedSkills.forEach(skill => {
+        const tag = document.createElement('span');
+        tag.className = 'skill-tag';
+        tag.innerHTML = `
+            ${skill}
+            <button type="button" class="skill-tag-remove" onclick="removeSkill('${skill}')">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(tag);
+    });
+    
+    // Update hidden input
+    document.getElementById('skills_hidden').value = JSON.stringify(selectedSkills);
+}
+
+// Skills input handling
+document.getElementById('skills_input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const skill = this.value.trim();
+        if (skill) {
+            addSkill(skill);
+            this.value = '';
+        }
+    }
+});
+
+// Popular skills click handling
+document.querySelectorAll('.skill-suggestion').forEach(element => {
+    element.addEventListener('click', function() {
+        const skill = this.dataset.skill;
+        addSkill(skill);
+        this.style.display = 'none'; // Hide after adding
+    });
+});
+
+// Profile completion tracking
+function updateProfileCompletion() {
+    const checks = {
+        basic_info: document.getElementById('first_name').value && document.getElementById('last_name').value,
+        resume: {% if current_user.jobseeker_profile and current_user.jobseeker_profile.resume_filename %}true{% else %}document.getElementById('resume').files.length > 0{% endif %},
+        skills: selectedSkills.length > 0,
+        experience: document.getElementById('current_position').value && document.getElementById('experience_years').value,
+        education: document.getElementById('education').value.trim().length > 0
+    };
+    
+    let completedCount = 0;
+    Object.keys(checks).forEach(field => {
+        const item = document.querySelector(`[data-field="${field}"]`);
+        const icon = item.querySelector('i');
+        
+        if (checks[field]) {
+            icon.className = 'fas fa-check-circle text-success';
+            completedCount++;
+        } else {
+            icon.className = 'fas fa-circle text-light-50';
+        }
+    });
+    
+    const percentage = Math.round((completedCount / Object.keys(checks).length) * 100);
+    document.getElementById('completionText').textContent = `${percentage}%`;
+    
+    // Update circle progress (simplified)
+    const circle = document.getElementById('completionCircle');
+    circle.style.background = `conic-gradient(#458E83 ${percentage * 3.6}deg, #333 0deg)`;
+}
+
+// Form validation
+document.querySelector('.profile-form').addEventListener('submit', function(e) {
+    const firstName = document.getElementById('first_name').value.trim();
+    const lastName = document.getElementById('last_name').value.trim();
+    
+    if (!firstName || !lastName) {
+        e.preventDefault();
+        alert('Please fill in your first and last name.');
+        return false;
+    }
+});
+
+// Auto-save functionality
+let saveTimeout;
+function autoSave() {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+        const formData = new FormData(document.querySelector('.profile-form'));
+        formData.append('auto_save', 'true');
+        
+        fetch('/profile/auto-save', {
+            method: 'POST',
+            body: formData
+        }).catch(error => {
+            console.error('Auto-save failed:', error);
+        });
+    }, 2000);
+}
+
+// Add auto-save listeners
+document.querySelectorAll('input, textarea, select').forEach(element => {
+    element.addEventListener('input', autoSave);
+    element.addEventListener('change', updateProfileCompletion);
+});
+
+// Preview profile function
+function previewProfile() {
+    const formData = new FormData(document.querySelector('.profile-form'));
+    
+    // In a real implementation, this would open a preview modal
+    alert('Profile preview would be shown here with all the entered information.');
+}
+
+// File upload validation
+document.getElementById('resume').addEventListener('change', function() {
+    const file = this.files[0];
+    if (file) {
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        
+        if (file.size > maxSize) {
+            alert('File size must be less than 5MB');
+            this.value = '';
+            return;
+        }
+        
+        if (!allowedTypes.includes(file.type)) {
+            alert('Please upload a PDF, DOC, or DOCX file');
+            this.value = '';
+            return;
+        }
+        
+        updateProfileCompletion();
+    }
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSkills();
+    updateProfileCompletion();
+    
+    // Show unsaved changes warning
+    let hasUnsavedChanges = false;
+    
+    document.querySelectorAll('input, textarea, select').forEach(element => {
+        element.addEventListener('input', () => {
+            hasUnsavedChanges = true;
+        });
+    });
+    
+    document.querySelector('.profile-form').addEventListener('submit', () => {
+        hasUnsavedChanges = false;
+    });
+    
+    window.addEventListener('beforeunload', function(e) {
+        if (hasUnsavedChanges) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+});
+</script>
+{% endblock %}

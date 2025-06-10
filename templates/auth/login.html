@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In - Hirica{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="auth-card">
+                    <div class="text-center mb-4">
+                        <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="Hirica" height="60" class="mb-3">
+                        <h2 class="auth-title">Welcome Back</h2>
+                        <p class="text-light-75">Sign in to your Hirica account</p>
+                    </div>
+
+                    <form method="POST" class="auth-form">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-envelope"></i>
+                                </span>
+                                <input type="email" class="form-control" id="email" name="email" required 
+                                       placeholder="Enter your email">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                                <input type="password" class="form-control" id="password" name="password" required 
+                                       placeholder="Enter your password">
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 d-flex justify-content-between align-items-center">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="remember_me" name="remember_me">
+                                <label class="form-check-label" for="remember_me">
+                                    Remember me
+                                </label>
+                            </div>
+                            <a href="{{ url_for('auth.forgot_password') }}" class="text-primary text-decoration-none">
+                                Forgot password?
+                            </a>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 mb-3">
+                            <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                        </button>
+
+                        <div class="divider">
+                            <span>or</span>
+                        </div>
+
+                        <a href="{{ url_for('google_auth.login') }}" class="btn btn-google w-100 mb-3">
+                            <i class="fab fa-google me-2"></i>Continue with Google
+                        </a>
+
+                        <div class="text-center">
+                            <p class="text-light-75 mb-0">
+                                Don't have an account?
+                            </p>
+                            <div class="mt-2">
+                                <a href="{{ url_for('auth.register', role='jobseeker') }}" class="btn btn-outline-primary btn-sm me-2">
+                                    <i class="fas fa-user me-1"></i>Job Seeker
+                                </a>
+                                <a href="{{ url_for('auth.register', role='recruiter') }}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-building me-1"></i>Recruiter
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Toggle password visibility
+document.getElementById('togglePassword').addEventListener('click', function() {
+    const password = document.getElementById('password');
+    const icon = this.querySelector('i');
+    
+    if (password.type === 'password') {
+        password.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        password.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+});
+</script>
+{% endblock %}

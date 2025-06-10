@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Applications for {{ job.title }} - Hirica{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="dashboard-header mb-4">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="dashboard-title">
+                        <i class="fas fa-users me-3"></i>Applications
+                    </h1>
+                    <p class="text-light-75 mb-0">
+                        <strong>{{ job.title }}</strong> at {{ job.location }}
+                    </p>
+                </div>
+                <div class="col-auto">
+                    <a href="{{ url_for('main.manage_jobs') }}" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Jobs
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Job Summary -->
+        <div class="dashboard-card mb-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="job-summary">
+                            <h5 class="text-white mb-2">{{ job.title }}</h5>
+                            <div class="job-meta">
+                                <span class="badge bg-secondary me-2">{{ job.employment_type }}</span>
+                                <span class="badge bg-info me-2">{{ job.experience_level }}</span>
+                                <span class="text-light-75">
+                                    <i class="fas fa-map-marker-alt me-1"></i>{{ job.location }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="job-stats">
+                            <div class="stat-item">
+                                <span class="stat-value">{{ applications|length }}</span>
+                                <span class="stat-label">Total Applications</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Applications List -->
+        <div class="dashboard-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>All Applications
+                </h5>
+                <div class="filter-controls">
+                    <select class="form-select form-select-sm" id="statusFilter">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                        <option value="test_generated">Test Generated</option>
+                        <option value="test_taken">Test Completed</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if applications %}
+                <div class="applications-grid">
+                    {% for application in applications %}
+                    <div class="application-card" data-status="{{ application.status }}">
+                        <div class="application-header">
+                            <div class="d-flex align-items-start justify-content-between">
+                                <div class="candidate-info">
+                                    <div class="candidate-avatar">
+                                        <i class="fas fa-user-circle"></i>
+                                    </div>
+                                    <div class="candidate-details">
+                                        <h6 class="candidate-name">{{ application.jobseeker.user.get_full_name() }}</h6>
+                                        <p class="candidate-email">{{ application.jobseeker.user.email }}</p>
+                                        {% if application.jobseeker.current_position %}
+                                        <p class="candidate-position">{{ application.jobseeker.current_position }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="application-status">
+                                    {% if application.status == 'pending' %}
+                                    <span class="badge bg-warning">Pending Review</span>
+                                    {% elif application.status == 'approved' %}
+                                    <span class="badge bg-success">Approved</span>
+                                    {% elif application.status == 'rejected' %}
+                                    <span class="badge bg-danger">Rejected</span>
+                                    {% elif application.status == 'test_generated' %}
+                                    <span class="badge bg-info">Test Ready</span>
+                                    {% elif application.status == 'test_taken' %}
+                                    <span class="badge bg-primary">Test Completed</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="application-body">
+                            {% if application.cover_letter %}
+                            <div class="cover-letter-preview">
+                                <h6 class="text-white">Cover Letter</h6>
+                                <p class="text-light-75">
+                                    {{ application.cover_letter[:150] }}
+                                    {% if application.cover_letter|length > 150 %}...{% endif %}
+                                </p>
+                            </div>
+                            {% endif %}
+
+                            <div class="candidate-stats">
+                                <div class="row g-3 text-center">
+                                    {% if application.jobseeker.experience_years %}
+                                    <div class="col">
+                                        <div class="stat-item">
+                                            <span class="stat-value">{{ application.jobseeker.experience_years }}</span>
+                                            <span class="stat-label">Years Exp</span>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    {% if application.jobseeker.linkedin_url %}
+                                    <div class="col">
+                                        <a href="{{ application.jobseeker.linkedin_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fab fa-linkedin me-1"></i>LinkedIn
+                                        </a>
+                                    </div>
+                                    {% endif %}
+                                    {% if application.jobseeker.resume_filename %}
+                                    <div class="col">
+                                        <a href="{{ url_for('main.uploaded_file', filename=application.jobseeker.resume_filename) }}" 
+                                           target="_blank" class="btn btn-sm btn-outline-info">
+                                            <i class="fas fa-file-pdf me-1"></i>Resume
+                                        </a>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="application-footer">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="application-date">
+                                    <small class="text-light-50">
+                                        Applied {{ application.applied_at.strftime('%b %d, %Y at %I:%M %p') }}
+                                    </small>
+                                </div>
+                                <div class="application-actions">
+                                    {% if application.status == 'pending' %}
+                                    <form method="POST" action="{{ url_for('main.application_action', application_id=application.id) }}" class="d-inline">
+                                        <button type="submit" name="action" value="approve" class="btn btn-sm btn-success me-2">
+                                            <i class="fas fa-check me-1"></i>Approve
+                                        </button>
+                                        <button type="submit" name="action" value="reject" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-times me-1"></i>Reject
+                                        </button>
+                                    </form>
+                                    {% elif application.status == 'approved' %}
+                                    <a href="{{ url_for('main.generate_assessment', application_id=application.id) }}" 
+                                       class="btn btn-sm btn-primary">
+                                        <i class="fas fa-robot me-1"></i>Generate Assessment
+                                    </a>
+                                    {% elif application.status == 'test_taken' %}
+                                    <a href="{{ url_for('main.assessment_results', test_result_id=application.test_results[0].id) }}" 
+                                       class="btn btn-sm btn-info">
+                                        <i class="fas fa-chart-bar me-1"></i>View Results
+                                    </a>
+                                    {% endif %}
+                                    
+                                    <button class="btn btn-sm btn-outline-light ms-2" 
+                                            onclick="viewApplicationDetails({{ application.id }})">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-users mb-3"></i>
+                    <h6>No Applications Yet</h6>
+                    <p class="text-light-75">
+                        Applications for this job will appear here once candidates start applying.
+                    </p>
+                    <a href="{{ url_for('main.job_detail', job_id=job.id) }}" class="btn btn-primary">
+                        <i class="fas fa-eye me-2"></i>View Job Posting
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Application Details Modal -->
+<div class="modal fade" id="applicationModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-white">Application Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="applicationModalBody">
+                <!-- Application details will be loaded here -->
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Filter applications by status
+document.getElementById('statusFilter').addEventListener('change', function() {
+    const selectedStatus = this.value;
+    const applications = document.querySelectorAll('.application-card');
+    
+    applications.forEach(app => {
+        if (selectedStatus === '' || app.dataset.status === selectedStatus) {
+            app.style.display = 'block';
+        } else {
+            app.style.display = 'none';
+        }
+    });
+});
+
+function viewApplicationDetails(applicationId) {
+    // In a real implementation, this would fetch application details via AJAX
+    const modal = new bootstrap.Modal(document.getElementById('applicationModal'));
+    
+    // Placeholder content - in real implementation, fetch from server
+    document.getElementById('applicationModalBody').innerHTML = `
+        <div class="text-center">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Loading application details...</p>
+        </div>
+    `;
+    
+    modal.show();
+    
+    // Simulate loading (in real implementation, make AJAX call)
+    setTimeout(() => {
+        document.getElementById('applicationModalBody').innerHTML = `
+            <div class="text-center text-light-75">
+                <p>Detailed application view would be loaded here.</p>
+                <p>This would include full cover letter, resume preview, and complete candidate profile.</p>
+            </div>
+        `;
+    }, 1000);
+}
+
+// Auto-refresh applications every 30 seconds
+setInterval(() => {
+    // In a real implementation, this would check for new applications
+    console.log('Checking for new applications...');
+}, 30000);
+</script>
+{% endblock %}

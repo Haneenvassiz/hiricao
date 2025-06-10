@@ -1,0 +1,665 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Hirica{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="admin-header mb-4">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="page-title">
+                        <i class="fas fa-cog me-3"></i>Admin Dashboard
+                    </h1>
+                    <p class="text-light-75 mb-0">Platform monitoring and management</p>
+                </div>
+                <div class="col-auto">
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary" onclick="refreshData()">
+                            <i class="fas fa-sync-alt me-2"></i>Refresh
+                        </button>
+                        <button class="btn btn-primary" onclick="exportReport()">
+                            <i class="fas fa-download me-2"></i>Export Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="row g-4 mb-5">
+            <div class="col-xl-2 col-md-4 col-sm-6">
+                <div class="admin-metric-card">
+                    <div class="metric-icon bg-primary">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="metric-info">
+                        <div class="metric-value">{{ total_users }}</div>
+                        <div class="metric-label">Total Users</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-2 col-md-4 col-sm-6">
+                <div class="admin-metric-card">
+                    <div class="metric-icon bg-success">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <div class="metric-info">
+                        <div class="metric-value">{{ total_recruiters }}</div>
+                        <div class="metric-label">Recruiters</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-2 col-md-4 col-sm-6">
+                <div class="admin-metric-card">
+                    <div class="metric-icon bg-info">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <div class="metric-info">
+                        <div class="metric-value">{{ total_jobseekers }}</div>
+                        <div class="metric-label">Job Seekers</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-2 col-md-4 col-sm-6">
+                <div class="admin-metric-card">
+                    <div class="metric-icon bg-warning">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <div class="metric-info">
+                        <div class="metric-value">{{ total_jobs }}</div>
+                        <div class="metric-label">Total Jobs</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-2 col-md-4 col-sm-6">
+                <div class="admin-metric-card">
+                    <div class="metric-icon bg-secondary">
+                        <i class="fas fa-paper-plane"></i>
+                    </div>
+                    <div class="metric-info">
+                        <div class="metric-value">{{ total_applications }}</div>
+                        <div class="metric-label">Applications</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-2 col-md-4 col-sm-6">
+                <div class="admin-metric-card">
+                    <div class="metric-icon bg-danger">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="metric-info">
+                        <div class="metric-value">{{ recent_violations }}</div>
+                        <div class="metric-label">Violations</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts and Analytics -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-8">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-line me-2"></i>Platform Growth
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="growthChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-pie me-2"></i>User Distribution
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="userDistributionChart" width="200" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Health -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-6">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-heartbeat me-2"></i>System Health
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="health-metrics">
+                            <div class="health-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>Database Connection</span>
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>Healthy
+                                    </span>
+                                </div>
+                                <div class="progress mt-2" style="height: 4px;">
+                                    <div class="progress-bar bg-success" style="width: 95%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="health-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>AI Service (Groq)</span>
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>Online
+                                    </span>
+                                </div>
+                                <div class="progress mt-2" style="height: 4px;">
+                                    <div class="progress-bar bg-success" style="width: 88%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="health-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>Email Service</span>
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>Degraded
+                                    </span>
+                                </div>
+                                <div class="progress mt-2" style="height: 4px;">
+                                    <div class="progress-bar bg-warning" style="width: 72%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="health-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>File Storage</span>
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>Operational
+                                    </span>
+                                </div>
+                                <div class="progress mt-2" style="height: 4px;">
+                                    <div class="progress-bar bg-success" style="width: 91%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Security Alerts
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="security-alerts">
+                            <div class="alert-item">
+                                <div class="alert-icon bg-danger">
+                                    <i class="fas fa-ban"></i>
+                                </div>
+                                <div class="alert-content">
+                                    <div class="alert-title">High Violation Rate</div>
+                                    <div class="alert-description">Test ID #1234 had 5 violations</div>
+                                    <div class="alert-time">2 minutes ago</div>
+                                </div>
+                            </div>
+                            
+                            <div class="alert-item">
+                                <div class="alert-icon bg-warning">
+                                    <i class="fas fa-eye"></i>
+                                </div>
+                                <div class="alert-content">
+                                    <div class="alert-title">Multiple Tab Switches</div>
+                                    <div class="alert-description">User attempted tab switching 3 times</div>
+                                    <div class="alert-time">15 minutes ago</div>
+                                </div>
+                            </div>
+                            
+                            <div class="alert-item">
+                                <div class="alert-icon bg-info">
+                                    <i class="fas fa-info-circle"></i>
+                                </div>
+                                <div class="alert-content">
+                                    <div class="alert-title">Webcam Disconnected</div>
+                                    <div class="alert-description">Assessment paused due to camera issue</div>
+                                    <div class="alert-time">1 hour ago</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-user-plus me-2"></i>Recent Users
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="recent-activity">
+                            {% for user in recent_users %}
+                            <div class="activity-item">
+                                <div class="activity-avatar">
+                                    <i class="fas fa-user-circle"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">{{ user.get_full_name() }}</div>
+                                    <div class="activity-description">
+                                        Joined as {{ user.role }}
+                                    </div>
+                                    <div class="activity-time">{{ user.created_at.strftime('%b %d, %Y') }}</div>
+                                </div>
+                                <div class="activity-status">
+                                    <span class="badge bg-{{ 'success' if user.is_active else 'secondary' }}">
+                                        {{ 'Active' if user.is_active else 'Inactive' }}
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-briefcase me-2"></i>Recent Jobs
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="recent-activity">
+                            {% for job in recent_jobs %}
+                            <div class="activity-item">
+                                <div class="activity-avatar bg-primary">
+                                    <i class="fas fa-building"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">{{ job.title }}</div>
+                                    <div class="activity-description">
+                                        {{ job.recruiter.company }}
+                                    </div>
+                                    <div class="activity-time">{{ job.created_at.strftime('%b %d, %Y') }}</div>
+                                </div>
+                                <div class="activity-status">
+                                    <span class="badge bg-{{ 'success' if job.is_active else 'secondary' }}">
+                                        {{ 'Active' if job.is_active else 'Inactive' }}
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-paper-plane me-2"></i>Recent Applications
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="recent-activity">
+                            {% for application in recent_applications %}
+                            <div class="activity-item">
+                                <div class="activity-avatar bg-info">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">{{ application.jobseeker.user.get_full_name() }}</div>
+                                    <div class="activity-description">
+                                        Applied for {{ application.job.title }}
+                                    </div>
+                                    <div class="activity-time">{{ application.applied_at.strftime('%b %d, %Y') }}</div>
+                                </div>
+                                <div class="activity-status">
+                                    <span class="badge bg-{{ 'warning' if application.status == 'pending' else 'success' if application.status == 'approved' else 'danger' if application.status == 'rejected' else 'info' }}">
+                                        {{ application.status|title }}
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Management Actions -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-tools me-2"></i>System Management
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-primary w-100" onclick="manageUsers()">
+                                    <i class="fas fa-users me-2"></i>Manage Users
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-info w-100" onclick="manageJobs()">
+                                    <i class="fas fa-briefcase me-2"></i>Manage Jobs
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-warning w-100" onclick="viewLogs()">
+                                    <i class="fas fa-file-alt me-2"></i>System Logs
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-success w-100" onclick="generateReport()">
+                                    <i class="fas fa-chart-bar me-2"></i>Analytics Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Initialize charts
+document.addEventListener('DOMContentLoaded', function() {
+    initializeGrowthChart();
+    initializeUserDistributionChart();
+    startRealTimeUpdates();
+});
+
+function initializeGrowthChart() {
+    const ctx = document.getElementById('growthChart').getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Users',
+                data: [12, 19, 15, 25, 32, 45],
+                borderColor: '#458E83',
+                backgroundColor: 'rgba(69, 142, 131, 0.1)',
+                tension: 0.4
+            }, {
+                label: 'Jobs',
+                data: [5, 8, 12, 15, 22, 28],
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                tension: 0.4
+            }, {
+                label: 'Applications',
+                data: [8, 15, 25, 35, 48, 62],
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#fff'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: '#ccc'
+                    },
+                    grid: {
+                        color: '#333'
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: '#ccc'
+                    },
+                    grid: {
+                        color: '#333'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function initializeUserDistributionChart() {
+    const ctx = document.getElementById('userDistributionChart').getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Job Seekers', 'Recruiters'],
+            datasets: [{
+                data: [{{ total_jobseekers }}, {{ total_recruiters }}],
+                backgroundColor: ['#458E83', '#007bff'],
+                borderColor: ['#458E83', '#007bff'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#fff'
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Real-time updates
+function startRealTimeUpdates() {
+    setInterval(() => {
+        updateMetrics();
+        updateSystemHealth();
+        updateSecurityAlerts();
+    }, 30000); // Update every 30 seconds
+}
+
+function updateMetrics() {
+    // In a real implementation, fetch updated metrics from server
+    fetch('/admin/api/metrics')
+        .then(response => response.json())
+        .then(data => {
+            // Update metric cards
+            updateMetricCard('total_users', data.total_users);
+            updateMetricCard('total_jobs', data.total_jobs);
+            updateMetricCard('total_applications', data.total_applications);
+        })
+        .catch(error => console.error('Failed to update metrics:', error));
+}
+
+function updateMetricCard(metricType, value) {
+    const card = document.querySelector(`[data-metric="${metricType}"] .metric-value`);
+    if (card) {
+        animateValue(card, parseInt(card.textContent), value, 1000);
+    }
+}
+
+function animateValue(element, start, end, duration) {
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        element.textContent = Math.floor(progress * (end - start) + start);
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        }
+    };
+    window.requestAnimationFrame(step);
+}
+
+function updateSystemHealth() {
+    // Check system health endpoints
+    const healthChecks = [
+        { name: 'database', endpoint: '/health/database' },
+        { name: 'ai_service', endpoint: '/health/ai' },
+        { name: 'email_service', endpoint: '/health/email' },
+        { name: 'file_storage', endpoint: '/health/storage' }
+    ];
+    
+    healthChecks.forEach(check => {
+        fetch(check.endpoint)
+            .then(response => {
+                const status = response.ok ? 'healthy' : 'degraded';
+                updateHealthStatus(check.name, status);
+            })
+            .catch(() => {
+                updateHealthStatus(check.name, 'error');
+            });
+    });
+}
+
+function updateHealthStatus(service, status) {
+    const healthItem = document.querySelector(`[data-service="${service}"]`);
+    if (healthItem) {
+        const badge = healthItem.querySelector('.badge');
+        const progressBar = healthItem.querySelector('.progress-bar');
+        
+        switch (status) {
+            case 'healthy':
+                badge.className = 'badge bg-success';
+                badge.innerHTML = '<i class="fas fa-check me-1"></i>Healthy';
+                progressBar.className = 'progress-bar bg-success';
+                progressBar.style.width = '95%';
+                break;
+            case 'degraded':
+                badge.className = 'badge bg-warning';
+                badge.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Degraded';
+                progressBar.className = 'progress-bar bg-warning';
+                progressBar.style.width = '70%';
+                break;
+            case 'error':
+                badge.className = 'badge bg-danger';
+                badge.innerHTML = '<i class="fas fa-times me-1"></i>Error';
+                progressBar.className = 'progress-bar bg-danger';
+                progressBar.style.width = '25%';
+                break;
+        }
+    }
+}
+
+function updateSecurityAlerts() {
+    fetch('/admin/api/security-alerts')
+        .then(response => response.json())
+        .then(data => {
+            // Update security alerts list
+            updateAlertsDisplay(data.alerts);
+        })
+        .catch(error => console.error('Failed to update security alerts:', error));
+}
+
+function updateAlertsDisplay(alerts) {
+    const container = document.querySelector('.security-alerts');
+    if (container && alerts.length > 0) {
+        // Update with new alerts (simplified)
+        console.log('Security alerts updated:', alerts.length);
+    }
+}
+
+// Management functions
+function manageUsers() {
+    window.location.href = '/admin/users';
+}
+
+function manageJobs() {
+    window.location.href = '/admin/jobs';
+}
+
+function viewLogs() {
+    window.location.href = '/admin/logs';
+}
+
+function generateReport() {
+    if (confirm('Generate comprehensive analytics report?')) {
+        window.location.href = '/admin/reports/generate';
+    }
+}
+
+function refreshData() {
+    location.reload();
+}
+
+function exportReport() {
+    window.location.href = '/admin/export/dashboard-report';
+}
+
+// Notification system for admin
+function showAdminNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.zIndex = '9999';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 5000);
+}
+
+// Auto-refresh indicators
+let refreshIndicator;
+function startRefreshIndicator() {
+    refreshIndicator = setInterval(() => {
+        const button = document.querySelector('[onclick="refreshData()"]');
+        if (button) {
+            button.innerHTML = '<i class="fas fa-sync-alt fa-spin me-2"></i>Refreshing...';
+            setTimeout(() => {
+                button.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Refresh';
+            }, 2000);
+        }
+    }, 30000);
+}
+
+// Initialize refresh indicator
+document.addEventListener('DOMContentLoaded', function() {
+    startRefreshIndicator();
+});
+</script>
+{% endblock %}

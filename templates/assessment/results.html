@@ -1,0 +1,565 @@
+{% extends "base.html" %}
+
+{% block title %}Assessment Results - Hirica{% endblock %}
+
+{% block content %}
+<div class="results-container">
+    <div class="container">
+        <!-- Header -->
+        <div class="results-header mb-4">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="page-title">
+                        <i class="fas fa-chart-bar me-3"></i>Assessment Results
+                    </h1>
+                    <p class="text-light-75 mb-0">
+                        {% if current_user.role == 'jobseeker' %}
+                        Your assessment results for {{ test_result.application.job.title }}
+                        {% else %}
+                        Assessment results for {{ test_result.application.jobseeker.user.get_full_name() }}
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-auto">
+                    {% if current_user.role == 'jobseeker' %}
+                    <a href="{{ url_for('main.jobseeker_dashboard') }}" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('main.view_applications', job_id=test_result.application.job_id) }}" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Applications
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Main Results -->
+            <div class="col-lg-8">
+                <!-- Overall Score -->
+                <div class="dashboard-card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-trophy me-2"></i>Overall Performance
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="score-display">
+                            <div class="row align-items-center">
+                                <div class="col-md-4 text-center">
+                                    <div class="score-circle">
+                                        <div class="score-value">{{ "%.1f"|format(test_result.score or 0) }}%</div>
+                                        <div class="score-label">Overall Score</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="score-breakdown">
+                                        <div class="score-bar">
+                                            <div class="score-progress" style="width: {{ test_result.score or 0 }}%"></div>
+                                        </div>
+                                        
+                                        <div class="score-details mt-3">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <div class="score-stat">
+                                                        <span class="stat-label">Questions Answered:</span>
+                                                        <span class="stat-value">{{ test_result.get_answers_dict()|length }} / {{ test_result.assessment.get_questions_list()|length }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="score-stat">
+                                                        <span class="stat-label">Time Taken:</span>
+                                                        <span class="stat-value">
+                                                            {% if test_result.time_taken %}
+                                                            {{ test_result.time_taken }} minutes
+                                                            {% else %}
+                                                            Not completed
+                                                            {% endif %}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="score-stat">
+                                                        <span class="stat-label">Completion Status:</span>
+                                                        <span class="stat-value">
+                                                            {% if test_result.status == 'completed' %}
+                                                            <span class="badge bg-success">Completed</span>
+                                                            {% elif test_result.status == 'pending_projects' %}
+                                                            <span class="badge bg-warning">Pending Projects</span>
+                                                            {% else %}
+                                                            <span class="badge bg-info">{{ test_result.status|title }}</span>
+                                                            {% endif %}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="score-stat">
+                                                        <span class="stat-label">Violations:</span>
+                                                        <span class="stat-value">
+                                                            {% set violations = test_result.get_violations_list()|length %}
+                                                            <span class="badge bg-{{ 'success' if violations == 0 else 'warning' if violations < 3 else 'danger' }}">
+                                                                {{ violations }}
+                                                            </span>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question Breakdown -->
+                {% if current_user.role == 'recruiter' %}
+                <div class="dashboard-card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list-alt me-2"></i>Question-by-Question Analysis
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="questions-breakdown">
+                            {% for question in test_result.assessment.get_questions_list() %}
+                            <div class="question-result-item">
+                                <div class="question-header">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="question-info">
+                                            <h6 class="question-title">Question {{ loop.index }}</h6>
+                                            <p class="question-type">
+                                                <span class="badge bg-secondary">{{ question.type|title }}</span>
+                                                <span class="badge bg-info">{{ question.difficulty|title }}</span>
+                                            </p>
+                                        </div>
+                                        <div class="question-score">
+                                            {% set answer_key = "question_" ~ question.id %}
+                                            {% set user_answer = test_result.get_answers_dict().get(answer_key) %}
+                                            {% if question.type == 'multiple_choice' %}
+                                                {% if user_answer is not none and user_answer|int == question.correct_answer %}
+                                                <span class="badge bg-success">Correct</span>
+                                                {% elif user_answer is not none %}
+                                                <span class="badge bg-danger">Incorrect</span>
+                                                {% else %}
+                                                <span class="badge bg-secondary">Not Answered</span>
+                                                {% endif %}
+                                            {% else %}
+                                                {% if user_answer %}
+                                                <span class="badge bg-info">Answered</span>
+                                                {% else %}
+                                                <span class="badge bg-secondary">Not Answered</span>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="question-content">
+                                    <div class="question-text mb-3">
+                                        <strong>Question:</strong> {{ question.question }}
+                                    </div>
+                                    
+                                    {% if question.type == 'multiple_choice' %}
+                                    <div class="question-options mb-3">
+                                        <strong>Options:</strong>
+                                        <ul class="options-list">
+                                            {% for option in question.options %}
+                                            <li class="{% if loop.index0 == question.correct_answer %}correct-option{% endif %} {% if user_answer is not none and user_answer|int == loop.index0 %}user-selected{% endif %}">
+                                                {{ option }}
+                                                {% if loop.index0 == question.correct_answer %}
+                                                <i class="fas fa-check text-success ms-2"></i>
+                                                {% endif %}
+                                                {% if user_answer is not none and user_answer|int == loop.index0 and loop.index0 != question.correct_answer %}
+                                                <i class="fas fa-times text-danger ms-2"></i>
+                                                {% endif %}
+                                            </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if user_answer %}
+                                    <div class="candidate-answer">
+                                        <strong>Candidate's Answer:</strong>
+                                        <div class="answer-content">
+                                            {% if question.type == 'multiple_choice' %}
+                                            Option {{ user_answer|int + 1 }}: {{ question.options[user_answer|int] }}
+                                            {% else %}
+                                            <pre class="answer-text">{{ user_answer }}</pre>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Projects Results -->
+                {% if test_result.assessment.get_projects_list() %}
+                <div class="dashboard-card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-project-diagram me-2"></i>Project Submissions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="projects-results">
+                            {% for project in test_result.assessment.get_projects_list() %}
+                            <div class="project-result-item">
+                                <div class="project-header">
+                                    <h6 class="project-title">{{ project.title }}</h6>
+                                    <span class="badge bg-{{ 'success' if project.type == 'short' else 'info' }}">
+                                        {{ project.type|title }} Project
+                                    </span>
+                                </div>
+                                
+                                <div class="project-description mb-3">
+                                    <p class="text-light-75">{{ project.description }}</p>
+                                </div>
+                                
+                                {% set project_key = "project_" ~ loop.index %}
+                                {% set project_answer = test_result.get_answers_dict().get(project_key) %}
+                                
+                                {% if project_answer %}
+                                <div class="project-submission">
+                                    <h6 class="text-white">Submission:</h6>
+                                    {% if current_user.role == 'recruiter' %}
+                                    <div class="submission-content">
+                                        <pre class="code-submission">{{ project_answer }}</pre>
+                                    </div>
+                                    {% else %}
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-check me-2"></i>Project submitted successfully
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    {% if project.type == 'extended' %}
+                                    Extended project pending submission
+                                    {% else %}
+                                    Project not completed
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Assessment Integrity -->
+                {% if current_user.role == 'recruiter' and test_result.get_violations_list() %}
+                <div class="dashboard-card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-shield-alt me-2"></i>Assessment Integrity Report
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="integrity-report">
+                            {% set violations = test_result.get_violations_list() %}
+                            {% if violations %}
+                            <div class="alert alert-warning">
+                                <h6 class="alert-heading">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    {{ violations|length }} Violation(s) Detected
+                                </h6>
+                                <p class="mb-0">Please review the integrity violations below when evaluating this assessment.</p>
+                            </div>
+                            
+                            <div class="violations-list">
+                                {% for log in test_result.cheat_logs %}
+                                <div class="violation-item">
+                                    <div class="violation-header">
+                                        <span class="violation-type badge bg-{{ 'danger' if log.severity == 'high' else 'warning' if log.severity == 'medium' else 'info' }}">
+                                            {{ log.violation_type|replace('_', ' ')|title }}
+                                        </span>
+                                        <span class="violation-time text-light-75">
+                                            {{ log.timestamp.strftime('%H:%M:%S') }}
+                                        </span>
+                                    </div>
+                                    <div class="violation-description">
+                                        {{ log.description }}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                No integrity violations detected. Assessment was taken under proper conditions.
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Assessment Summary -->
+                <div class="dashboard-card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Assessment Summary
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="assessment-summary">
+                            <div class="summary-item">
+                                <span class="summary-label">Job Position:</span>
+                                <span class="summary-value">{{ test_result.application.job.title }}</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">Company:</span>
+                                <span class="summary-value">{{ test_result.application.job.recruiter.company }}</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">Assessment Date:</span>
+                                <span class="summary-value">
+                                    {% if test_result.completed_at %}
+                                    {{ test_result.completed_at.strftime('%B %d, %Y') }}
+                                    {% else %}
+                                    Not completed
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">Duration:</span>
+                                <span class="summary-value">{{ test_result.assessment.time_limit }} minutes allowed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Insights -->
+                <div class="dashboard-card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-lightbulb me-2"></i>Performance Insights
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="performance-insights">
+                            {% set score = test_result.score or 0 %}
+                            {% if score >= 80 %}
+                            <div class="insight-item excellent">
+                                <i class="fas fa-star text-success me-2"></i>
+                                <div>
+                                    <strong>Excellent Performance</strong>
+                                    <p class="text-light-75 mb-0">Outstanding results demonstrating strong competency in the required skills.</p>
+                                </div>
+                            </div>
+                            {% elif score >= 60 %}
+                            <div class="insight-item good">
+                                <i class="fas fa-thumbs-up text-info me-2"></i>
+                                <div>
+                                    <strong>Good Performance</strong>
+                                    <p class="text-light-75 mb-0">Solid understanding with room for growth in specific areas.</p>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="insight-item needs-improvement">
+                                <i class="fas fa-chart-line text-warning me-2"></i>
+                                <div>
+                                    <strong>Needs Improvement</strong>
+                                    <p class="text-light-75 mb-0">Consider additional training in key areas before reapplication.</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if test_result.time_taken and test_result.time_taken < test_result.assessment.time_limit * 0.5 %}
+                            <div class="insight-item">
+                                <i class="fas fa-clock text-primary me-2"></i>
+                                <div>
+                                    <strong>Quick Completion</strong>
+                                    <p class="text-light-75 mb-0">Completed in significantly less time than allocated.</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if test_result.get_violations_list()|length == 0 %}
+                            <div class="insight-item">
+                                <i class="fas fa-shield-check text-success me-2"></i>
+                                <div>
+                                    <strong>High Integrity</strong>
+                                    <p class="text-light-75 mb-0">No violations detected during the assessment.</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Next Steps -->
+                {% if current_user.role == 'jobseeker' %}
+                <div class="dashboard-card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-arrow-right me-2"></i>Next Steps
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="next-steps">
+                            <div class="step-item">
+                                <i class="fas fa-hourglass-half text-warning me-2"></i>
+                                <div>
+                                    <strong>Wait for Review</strong>
+                                    <p class="text-light-75 mb-0">The recruiter will review your results and get back to you.</p>
+                                </div>
+                            </div>
+                            <div class="step-item">
+                                <i class="fas fa-bell text-info me-2"></i>
+                                <div>
+                                    <strong>Check Notifications</strong>
+                                    <p class="text-light-75 mb-0">You'll be notified of any updates regarding your application.</p>
+                                </div>
+                            </div>
+                            <div class="step-item">
+                                <i class="fas fa-search text-primary me-2"></i>
+                                <div>
+                                    <strong>Continue Searching</strong>
+                                    <p class="text-light-75 mb-0">
+                                        <a href="{{ url_for('main.jobs') }}" class="text-primary">Browse more jobs</a> 
+                                        while waiting for results.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% elif current_user.role == 'recruiter' %}
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-user-check me-2"></i>Recruiter Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="recruiter-actions">
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-success" onclick="sendOfferLetter()">
+                                    <i class="fas fa-envelope me-2"></i>Send Offer Letter
+                                </button>
+                                <button class="btn btn-info" onclick="scheduleInterview()">
+                                    <i class="fas fa-calendar me-2"></i>Schedule Interview
+                                </button>
+                                <button class="btn btn-warning" onclick="requestRetest()">
+                                    <i class="fas fa-redo me-2"></i>Request Retest
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="declineCandidate()">
+                                    <i class="fas fa-times me-2"></i>Decline Application
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Download Options -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="dashboard-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-white mb-1">Export Results</h6>
+                                <p class="text-light-75 mb-0">Download detailed assessment report</p>
+                            </div>
+                            <div class="export-buttons">
+                                <button class="btn btn-outline-primary me-2" onclick="exportToPDF()">
+                                    <i class="fas fa-file-pdf me-1"></i>PDF Report
+                                </button>
+                                <button class="btn btn-outline-info" onclick="exportToCSV()">
+                                    <i class="fas fa-file-csv me-1"></i>CSV Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Recruiter action functions
+function sendOfferLetter() {
+    if (confirm('Send an offer letter to this candidate?')) {
+        // In a real implementation, this would open an offer letter form
+        alert('Offer letter functionality would be implemented here.');
+    }
+}
+
+function scheduleInterview() {
+    if (confirm('Schedule an interview with this candidate?')) {
+        // In a real implementation, this would open a scheduling interface
+        alert('Interview scheduling functionality would be implemented here.');
+    }
+}
+
+function requestRetest() {
+    if (confirm('Allow this candidate to retake the assessment?')) {
+        // In a real implementation, this would enable a retest
+        alert('Retest functionality would be implemented here.');
+    }
+}
+
+function declineCandidate() {
+    if (confirm('Decline this candidate? This action cannot be undone.')) {
+        // In a real implementation, this would update the application status
+        alert('Decline functionality would be implemented here.');
+    }
+}
+
+// Export functions
+function exportToPDF() {
+    // In a real implementation, generate and download PDF report
+    alert('PDF export functionality would be implemented here.');
+}
+
+function exportToCSV() {
+    // In a real implementation, generate and download CSV data
+    alert('CSV export functionality would be implemented here.');
+}
+
+// Score circle animation
+document.addEventListener('DOMContentLoaded', function() {
+    const scoreValue = {{ test_result.score or 0 }};
+    animateScoreCircle(scoreValue);
+});
+
+function animateScoreCircle(targetScore) {
+    const circle = document.querySelector('.score-circle');
+    if (!circle) return;
+    
+    let currentScore = 0;
+    const increment = targetScore / 100;
+    
+    const timer = setInterval(() => {
+        currentScore += increment;
+        if (currentScore >= targetScore) {
+            currentScore = targetScore;
+            clearInterval(timer);
+        }
+        
+        // Update circle background (simplified)
+        circle.style.background = `conic-gradient(#458E83 ${currentScore * 3.6}deg, #333 0deg)`;
+    }, 20);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+
+{% block title %}Recruiter Dashboard - Hirica{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="container-fluid">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header mb-4">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="dashboard-title">
+                        <i class="fas fa-chart-line me-3"></i>Recruiter Dashboard
+                    </h1>
+                    <p class="text-light-75 mb-0">
+                        Welcome back, {{ current_user.first_name }}! 
+                        {% if current_user.recruiter_profile.company %}
+                        from {{ current_user.recruiter_profile.company }}
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-auto">
+                    <a href="{{ url_for('main.post_job') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Post New Job
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row g-4 mb-5">
+            <div class="col-xl-3 col-md-6">
+                <div class="stats-card">
+                    <div class="stats-card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="stats-icon bg-primary">
+                                <i class="fas fa-briefcase"></i>
+                            </div>
+                            <div class="ms-3">
+                                <div class="stats-value">{{ total_jobs }}</div>
+                                <div class="stats-label">Total Jobs</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="stats-card">
+                    <div class="stats-card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="stats-icon bg-success">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <div class="ms-3">
+                                <div class="stats-value">{{ active_jobs }}</div>
+                                <div class="stats-label">Active Jobs</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="stats-card">
+                    <div class="stats-card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="stats-icon bg-info">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="ms-3">
+                                <div class="stats-value">{{ total_applications }}</div>
+                                <div class="stats-label">Total Applications</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="stats-card">
+                    <div class="stats-card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="stats-icon bg-warning">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="ms-3">
+                                <div class="stats-value">{{ pending_applications }}</div>
+                                <div class="stats-label">Pending Review</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="row g-4">
+            <!-- Recent Jobs -->
+            <div class="col-lg-8">
+                <div class="dashboard-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-briefcase me-2"></i>Recent Jobs
+                        </h5>
+                        <a href="{{ url_for('main.manage_jobs') }}" class="btn btn-sm btn-outline-primary">
+                            View All
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        {% if recent_jobs %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Job Title</th>
+                                        <th>Location</th>
+                                        <th>Applications</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for job in recent_jobs %}
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold text-white">{{ job.title }}</div>
+                                            <small class="text-light-75">{{ job.employment_type }}</small>
+                                        </td>
+                                        <td class="text-light-75">{{ job.location }}</td>
+                                        <td>
+                                            <span class="badge bg-info">{{ job.applications|length }}</span>
+                                        </td>
+                                        <td>
+                                            {% if job.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{{ url_for('main.view_applications', job_id=job.id) }}" 
+                                                   class="btn btn-outline-primary" title="View Applications">
+                                                    <i class="fas fa-users"></i>
+                                                </a>
+                                                <a href="{{ url_for('main.job_detail', job_id=job.id) }}" 
+                                                   class="btn btn-outline-info" title="View Job">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-briefcase mb-3"></i>
+                            <h6>No jobs posted yet</h6>
+                            <p class="text-light-75">Start by posting your first job opening.</p>
+                            <a href="{{ url_for('main.post_job') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Post Your First Job
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Applications -->
+            <div class="col-lg-4">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-users me-2"></i>Recent Applications
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if recent_applications %}
+                        <div class="applications-list">
+                            {% for application in recent_applications %}
+                            <div class="application-item">
+                                <div class="d-flex align-items-start">
+                                    <div class="application-avatar">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="ms-3 flex-grow-1">
+                                        <div class="fw-bold text-white">
+                                            {{ application.jobseeker.user.get_full_name() }}
+                                        </div>
+                                        <div class="text-light-75 small">
+                                            Applied for {{ application.job.title }}
+                                        </div>
+                                        <div class="text-light-50 small">
+                                            {{ application.applied_at.strftime('%b %d, %Y') }}
+                                        </div>
+                                    </div>
+                                    <div class="application-status">
+                                        {% if application.status == 'pending' %}
+                                        <span class="badge bg-warning">Pending</span>
+                                        {% elif application.status == 'approved' %}
+                                        <span class="badge bg-success">Approved</span>
+                                        {% elif application.status == 'rejected' %}
+                                        <span class="badge bg-danger">Rejected</span>
+                                        {% elif application.status == 'test_generated' %}
+                                        <span class="badge bg-info">Test Ready</span>
+                                        {% elif application.status == 'test_taken' %}
+                                        <span class="badge bg-primary">Test Completed</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-users mb-3"></i>
+                            <h6>No applications yet</h6>
+                            <p class="text-light-75 text-center">Applications will appear here once candidates start applying.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row g-4 mt-4">
+            <div class="col-12">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-bolt me-2"></i>Quick Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <a href="{{ url_for('main.post_job') }}" class="quick-action-card">
+                                    <i class="fas fa-plus-circle"></i>
+                                    <span>Post New Job</span>
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="{{ url_for('main.manage_jobs') }}" class="quick-action-card">
+                                    <i class="fas fa-cog"></i>
+                                    <span>Manage Jobs</span>
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="{{ url_for('main.profile') }}" class="quick-action-card">
+                                    <i class="fas fa-user-edit"></i>
+                                    <span>Edit Profile</span>
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="{{ url_for('main.admin_dashboard') }}" class="quick-action-card">
+                                    <i class="fas fa-chart-bar"></i>
+                                    <span>Analytics</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Auto-refresh notifications
+setInterval(function() {
+    loadNotifications();
+}, 30000); // Refresh every 30 seconds
+
+function loadNotifications() {
+    fetch('/notifications')
+        .then(response => response.json())
+        .then(data => {
+            updateNotificationBadge(data.length);
+            updateNotificationContent(data);
+        })
+        .catch(error => console.error('Error loading notifications:', error));
+}
+
+function updateNotificationBadge(count) {
+    const badge = document.getElementById('notification-count');
+    if (count > 0) {
+        badge.textContent = count;
+        badge.style.display = 'block';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+function updateNotificationContent(notifications) {
+    const content = document.querySelector('.notifications-content');
+    if (notifications.length === 0) {
+        content.innerHTML = '<div class="text-center text-muted p-3">No new notifications</div>';
+        return;
+    }
+    
+    let html = '';
+    notifications.slice(0, 5).forEach(notification => {
+        html += `
+        <div class="notification-item">
+            <div class="notification-title">${notification.title}</div>
+            <div class="notification-message">${notification.message}</div>
+            <div class="notification-time">${notification.created_at}</div>
+        </div>
+        `;
+    });
+    
+    content.innerHTML = html;
+}
+
+// Load notifications on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadNotifications();
+});
+</script>
+{% endblock %}

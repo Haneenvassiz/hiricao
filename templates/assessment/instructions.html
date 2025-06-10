@@ -1,0 +1,513 @@
+{% extends "base.html" %}
+
+{% block title %}Assessment Instructions - Hirica{% endblock %}
+
+{% block content %}
+<div class="assessment-container">
+    <div class="container">
+        <!-- Header -->
+        <div class="assessment-header mb-4">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="page-title">
+                        <i class="fas fa-clipboard-list me-3"></i>Assessment Instructions
+                    </h1>
+                    <p class="text-light-75 mb-0">
+                        Please read the instructions carefully before starting your assessment
+                    </p>
+                </div>
+                <div class="col-auto">
+                    <a href="{{ url_for('main.jobseeker_dashboard') }}" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <!-- Job Information -->
+                <div class="dashboard-card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-briefcase me-2"></i>Assessment for: {{ application.job.title }}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="job-info">
+                                    <h6 class="text-white mb-2">{{ application.job.title }}</h6>
+                                    <p class="text-primary mb-2">{{ application.job.recruiter.company }}</p>
+                                    <div class="job-meta">
+                                        <span class="badge bg-secondary me-2">{{ application.job.employment_type }}</span>
+                                        <span class="badge bg-info me-2">{{ application.job.experience_level }}</span>
+                                        <span class="text-light-75">
+                                            <i class="fas fa-map-marker-alt me-1"></i>{{ application.job.location }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-md-end">
+                                <div class="assessment-meta">
+                                    <div class="meta-item">
+                                        <span class="meta-label">Duration:</span>
+                                        <span class="meta-value">{{ assessment.time_limit }} minutes</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <span class="meta-label">Questions:</span>
+                                        <span class="meta-value">{{ assessment.get_questions_list()|length }}</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <span class="meta-label">Projects:</span>
+                                        <span class="meta-value">{{ assessment.get_projects_list()|length }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assessment Overview -->
+                <div class="dashboard-card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Assessment Overview
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="assessment-overview">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="overview-section">
+                                        <h6 class="text-white">
+                                            <i class="fas fa-question-circle me-2"></i>Question Types
+                                        </h6>
+                                        <ul class="overview-list">
+                                            {% set question_types = [] %}
+                                            {% for question in assessment.get_questions_list() %}
+                                                {% if question.type not in question_types %}
+                                                    {% set _ = question_types.append(question.type) %}
+                                                {% endif %}
+                                            {% endfor %}
+                                            
+                                            {% if 'multiple_choice' in question_types %}
+                                            <li>Multiple Choice Questions</li>
+                                            {% endif %}
+                                            {% if 'text' in question_types %}
+                                            <li>Text-based Questions</li>
+                                            {% endif %}
+                                            {% if 'code' in question_types %}
+                                            <li>Coding Challenges</li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="overview-section">
+                                        <h6 class="text-white">
+                                            <i class="fas fa-project-diagram me-2"></i>Projects
+                                        </h6>
+                                        {% if assessment.get_projects_list() %}
+                                        <ul class="overview-list">
+                                            {% for project in assessment.get_projects_list() %}
+                                            <li>{{ project.title }} ({{ project.type }} project)</li>
+                                            {% endfor %}
+                                        </ul>
+                                        {% else %}
+                                        <p class="text-light-75">No projects in this assessment</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Requirements -->
+                <div class="dashboard-card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-desktop me-2"></i>System Requirements
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="requirements-grid">
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="requirement-item">
+                                        <i class="fas fa-wifi text-primary me-2"></i>
+                                        <div>
+                                            <strong>Stable Internet Connection</strong>
+                                            <p class="text-light-75 mb-0">Ensure you have a reliable internet connection throughout the assessment</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="requirement-item">
+                                        <i class="fas fa-video text-primary me-2"></i>
+                                        <div>
+                                            <strong>Webcam Access</strong>
+                                            <p class="text-light-75 mb-0">Your webcam will be used for proctoring during the assessment</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="requirement-item">
+                                        <i class="fas fa-microphone text-primary me-2"></i>
+                                        <div>
+                                            <strong>Microphone Access</strong>
+                                            <p class="text-light-75 mb-0">Microphone may be used for audio monitoring</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="requirement-item">
+                                        <i class="fas fa-expand text-primary me-2"></i>
+                                        <div>
+                                            <strong>Full-Screen Mode</strong>
+                                            <p class="text-light-75 mb-0">Assessment must be taken in full-screen mode</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Important Rules -->
+                <div class="dashboard-card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Important Rules & Guidelines
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-warning">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-shield-alt me-2"></i>Anti-Cheating Measures Active
+                            </h6>
+                            <p class="mb-0">This assessment uses advanced anti-cheating technology. Any violations will be recorded and may result in disqualification.</p>
+                        </div>
+                        
+                        <div class="rules-grid">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="rule-item forbidden">
+                                        <i class="fas fa-ban text-danger me-2"></i>
+                                        <span>Do NOT switch tabs or windows</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="rule-item forbidden">
+                                        <i class="fas fa-ban text-danger me-2"></i>
+                                        <span>Do NOT copy or paste content</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="rule-item forbidden">
+                                        <i class="fas fa-ban text-danger me-2"></i>
+                                        <span>Do NOT use external resources</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="rule-item forbidden">
+                                        <i class="fas fa-ban text-danger me-2"></i>
+                                        <span>Do NOT minimize the window</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="rule-item required">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        <span>Keep your face visible on camera</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="rule-item required">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        <span>Work in a quiet, well-lit environment</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assessment Environment Check -->
+                <div class="dashboard-card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-check-circle me-2"></i>Environment Check
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="environment-check">
+                            <p class="text-light-75 mb-3">We'll check your system before starting the assessment:</p>
+                            
+                            <div class="check-list">
+                                <div class="check-item" id="cameraCheck">
+                                    <i class="fas fa-circle text-light-50"></i>
+                                    <span>Camera Access</span>
+                                    <button class="btn btn-sm btn-outline-primary ms-auto" onclick="checkCamera()">Test</button>
+                                </div>
+                                
+                                <div class="check-item" id="microphoneCheck">
+                                    <i class="fas fa-circle text-light-50"></i>
+                                    <span>Microphone Access</span>
+                                    <button class="btn btn-sm btn-outline-primary ms-auto" onclick="checkMicrophone()">Test</button>
+                                </div>
+                                
+                                <div class="check-item" id="fullscreenCheck">
+                                    <i class="fas fa-circle text-light-50"></i>
+                                    <span>Full-screen Capability</span>
+                                    <button class="btn btn-sm btn-outline-primary ms-auto" onclick="checkFullscreen()">Test</button>
+                                </div>
+                                
+                                <div class="check-item" id="internetCheck">
+                                    <i class="fas fa-circle text-light-50"></i>
+                                    <span>Internet Connection</span>
+                                    <span class="text-success ms-auto">Connected</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Start Assessment -->
+                <div class="dashboard-card">
+                    <div class="card-body text-center">
+                        <div class="start-assessment">
+                            <h5 class="text-white mb-3">Ready to Begin?</h5>
+                            <p class="text-light-75 mb-4">
+                                Once you start the assessment, the timer will begin. Make sure you're ready and have read all instructions.
+                            </p>
+                            
+                            <div class="consent-section mb-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="readInstructions" required>
+                                    <label class="form-check-label" for="readInstructions">
+                                        I have read and understood all instructions and rules
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="consentMonitoring" required>
+                                    <label class="form-check-label" for="consentMonitoring">
+                                        I consent to video and audio monitoring during this assessment
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="acknowledgeRules" required>
+                                    <label class="form-check-label" for="acknowledgeRules">
+                                        I acknowledge that violations may result in disqualification
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <form method="POST" action="{{ url_for('main.start_assessment', application_id=application.id) }}">
+                                <button type="submit" class="btn btn-primary btn-lg" id="startAssessmentBtn" disabled>
+                                    <i class="fas fa-play me-2"></i>Start Assessment
+                                </button>
+                            </form>
+                            
+                            <p class="text-light-50 mt-3 small">
+                                <i class="fas fa-clock me-1"></i>
+                                Estimated completion time: {{ assessment.time_limit }} minutes
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Environment checks
+async function checkCamera() {
+    const checkItem = document.getElementById('cameraCheck');
+    const icon = checkItem.querySelector('i');
+    const button = checkItem.querySelector('button');
+    
+    try {
+        button.textContent = 'Testing...';
+        button.disabled = true;
+        
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        
+        // Success
+        icon.className = 'fas fa-check-circle text-success';
+        button.textContent = 'Granted';
+        button.className = 'btn btn-sm btn-success ms-auto';
+        
+        // Stop the stream
+        stream.getTracks().forEach(track => track.stop());
+        
+        checkAllSystems();
+    } catch (error) {
+        // Failed
+        icon.className = 'fas fa-times-circle text-danger';
+        button.textContent = 'Failed';
+        button.className = 'btn btn-sm btn-danger ms-auto';
+        
+        alert('Camera access is required for this assessment. Please allow camera access and try again.');
+    }
+}
+
+async function checkMicrophone() {
+    const checkItem = document.getElementById('microphoneCheck');
+    const icon = checkItem.querySelector('i');
+    const button = checkItem.querySelector('button');
+    
+    try {
+        button.textContent = 'Testing...';
+        button.disabled = true;
+        
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        
+        // Success
+        icon.className = 'fas fa-check-circle text-success';
+        button.textContent = 'Granted';
+        button.className = 'btn btn-sm btn-success ms-auto';
+        
+        // Stop the stream
+        stream.getTracks().forEach(track => track.stop());
+        
+        checkAllSystems();
+    } catch (error) {
+        // Failed
+        icon.className = 'fas fa-times-circle text-danger';
+        button.textContent = 'Failed';
+        button.className = 'btn btn-sm btn-danger ms-auto';
+        
+        alert('Microphone access is recommended for this assessment.');
+    }
+}
+
+function checkFullscreen() {
+    const checkItem = document.getElementById('fullscreenCheck');
+    const icon = checkItem.querySelector('i');
+    const button = checkItem.querySelector('button');
+    
+    if (document.fullscreenEnabled || document.webkitFullscreenEnabled || document.mozFullScreenEnabled) {
+        icon.className = 'fas fa-check-circle text-success';
+        button.textContent = 'Supported';
+        button.className = 'btn btn-sm btn-success ms-auto';
+        button.disabled = true;
+        
+        checkAllSystems();
+    } else {
+        icon.className = 'fas fa-times-circle text-danger';
+        button.textContent = 'Not Supported';
+        button.className = 'btn btn-sm btn-danger ms-auto';
+        button.disabled = true;
+        
+        alert('Full-screen mode is not supported by your browser. Please use a compatible browser.');
+    }
+}
+
+function checkAllSystems() {
+    const checks = document.querySelectorAll('.check-item i');
+    let allPassed = true;
+    
+    checks.forEach(icon => {
+        if (!icon.classList.contains('text-success')) {
+            allPassed = false;
+        }
+    });
+    
+    if (allPassed) {
+        // Enable consent checkboxes
+        enableConsentSection();
+    }
+}
+
+function enableConsentSection() {
+    const checkboxes = document.querySelectorAll('#readInstructions, #consentMonitoring, #acknowledgeRules');
+    checkboxes.forEach(checkbox => {
+        checkbox.disabled = false;
+    });
+    
+    // Check if all checkboxes are checked
+    function checkConsent() {
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        document.getElementById('startAssessmentBtn').disabled = !allChecked;
+    }
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', checkConsent);
+    });
+}
+
+// Auto-check internet connection
+function checkInternetConnection() {
+    const checkItem = document.getElementById('internetCheck');
+    const icon = checkItem.querySelector('i');
+    const status = checkItem.querySelector('.ms-auto');
+    
+    if (navigator.onLine) {
+        icon.className = 'fas fa-check-circle text-success';
+        status.textContent = 'Connected';
+        status.className = 'text-success ms-auto';
+    } else {
+        icon.className = 'fas fa-times-circle text-danger';
+        status.textContent = 'Disconnected';
+        status.className = 'text-danger ms-auto';
+    }
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    checkInternetConnection();
+    
+    // Monitor internet connection
+    window.addEventListener('online', checkInternetConnection);
+    window.addEventListener('offline', checkInternetConnection);
+    
+    // Prevent page refresh/leave
+    window.addEventListener('beforeunload', function(e) {
+        e.preventDefault();
+        e.returnValue = '';
+    });
+});
+
+// Countdown timer for preparation
+let countdownTimer;
+function startCountdown() {
+    let seconds = 10;
+    const button = document.getElementById('startAssessmentBtn');
+    const originalText = button.innerHTML;
+    
+    countdownTimer = setInterval(() => {
+        button.innerHTML = `<i class="fas fa-clock me-2"></i>Starting in ${seconds}...`;
+        seconds--;
+        
+        if (seconds < 0) {
+            clearInterval(countdownTimer);
+            button.innerHTML = originalText;
+            // Actually submit the form
+            button.closest('form').submit();
+        }
+    }, 1000);
+}
+
+// Override form submission to add countdown
+document.querySelector('form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    if (confirm('Are you ready to start the assessment? Once started, the timer cannot be paused.')) {
+        startCountdown();
+    }
+});
+</script>
+{% endblock %}

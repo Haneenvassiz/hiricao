@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}Post Job - Hirica{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="container">
+        <!-- Header -->
+        <div class="dashboard-header mb-4">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="dashboard-title">
+                        <i class="fas fa-plus-circle me-3"></i>Post New Job
+                    </h1>
+                    <p class="text-light-75 mb-0">Create a comprehensive job posting to attract top talent</p>
+                </div>
+                <div class="col-auto">
+                    <a href="{{ url_for('main.recruiter_dashboard') }}" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Job Form -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-briefcase me-2"></i>Job Details
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" class="job-form">
+                            <!-- Basic Information -->
+                            <div class="form-section">
+                                <h6 class="form-section-title">Basic Information</h6>
+                                
+                                <div class="mb-3">
+                                    <label for="title" class="form-label">Job Title *</label>
+                                    <input type="text" class="form-control" id="title" name="title" required 
+                                           placeholder="e.g., Senior Software Engineer">
+                                </div>
+
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label for="location" class="form-label">Location *</label>
+                                        <input type="text" class="form-control" id="location" name="location" required 
+                                               placeholder="e.g., San Francisco, CA or Remote">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="employment_type" class="form-label">Employment Type *</label>
+                                        <select class="form-select" id="employment_type" name="employment_type" required>
+                                            <option value="">Select type</option>
+                                            <option value="Full-time">Full-time</option>
+                                            <option value="Part-time">Part-time</option>
+                                            <option value="Contract">Contract</option>
+                                            <option value="Internship">Internship</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label for="experience_level" class="form-label">Experience Level</label>
+                                        <select class="form-select" id="experience_level" name="experience_level">
+                                            <option value="">Select level</option>
+                                            <option value="Entry">Entry Level (0-2 years)</option>
+                                            <option value="Mid">Mid Level (3-5 years)</option>
+                                            <option value="Senior">Senior Level (6+ years)</option>
+                                            <option value="Lead">Lead/Principal</option>
+                                            <option value="Executive">Executive</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="salary_range" class="form-label">Salary Range</label>
+                                        <input type="text" class="form-control" id="salary_range" name="salary_range" 
+                                               placeholder="e.g., $80,000 - $120,000">
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="degree_required" class="form-label">Required Education</label>
+                                    <select class="form-select" id="degree_required" name="degree_required">
+                                        <option value="">Select requirement</option>
+                                        <option value="High School">High School Diploma</option>
+                                        <option value="Associate">Associate Degree</option>
+                                        <option value="Bachelor">Bachelor's Degree</option>
+                                        <option value="Master">Master's Degree</option>
+                                        <option value="PhD">PhD</option>
+                                        <option value="None">No Formal Education Required</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Job Description -->
+                            <div class="form-section">
+                                <h6 class="form-section-title">Job Description</h6>
+                                
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">Job Description *</label>
+                                    <textarea class="form-control" id="description" name="description" rows="6" required 
+                                              placeholder="Provide a detailed description of the role, company culture, and what makes this opportunity unique..."></textarea>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="responsibilities" class="form-label">Key Responsibilities</label>
+                                    <textarea class="form-control" id="responsibilities" name="responsibilities" rows="5" 
+                                              placeholder="• Lead development of new features&#10;• Collaborate with cross-functional teams&#10;• Mentor junior developers..."></textarea>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="requirements" class="form-label">Requirements</label>
+                                    <textarea class="form-control" id="requirements" name="requirements" rows="5" 
+                                              placeholder="• 5+ years of experience with Python&#10;• Strong knowledge of web frameworks&#10;• Experience with cloud platforms..."></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Skills -->
+                            <div class="form-section">
+                                <h6 class="form-section-title">Required Skills</h6>
+                                
+                                <div class="mb-3">
+                                    <label for="skills_input" class="form-label">Skills *</label>
+                                    <div class="skills-input-container">
+                                        <input type="text" class="form-control" id="skills_input" 
+                                               placeholder="Type a skill and press Enter">
+                                        <div class="skills-tags mt-2" id="skills_tags"></div>
+                                    </div>
+                                    <div class="form-text">Add relevant skills for this position. Popular skills will be suggested.</div>
+                                </div>
+
+                                <!-- Popular Skills Suggestions -->
+                                <div class="mb-3">
+                                    <label class="form-label">Popular Skills (click to add)</label>
+                                    <div class="popular-skills">
+                                        <span class="skill-suggestion" data-skill="JavaScript">JavaScript</span>
+                                        <span class="skill-suggestion" data-skill="Python">Python</span>
+                                        <span class="skill-suggestion" data-skill="React">React</span>
+                                        <span class="skill-suggestion" data-skill="Node.js">Node.js</span>
+                                        <span class="skill-suggestion" data-skill="SQL">SQL</span>
+                                        <span class="skill-suggestion" data-skill="AWS">AWS</span>
+                                        <span class="skill-suggestion" data-skill="Docker">Docker</span>
+                                        <span class="skill-suggestion" data-skill="Git">Git</span>
+                                        <span class="skill-suggestion" data-skill="Machine Learning">Machine Learning</span>
+                                        <span class="skill-suggestion" data-skill="Data Analysis">Data Analysis</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Job Settings -->
+                            <div class="form-section">
+                                <h6 class="form-section-title">Job Settings</h6>
+                                
+                                <div class="mb-3">
+                                    <label for="expires_in_days" class="form-label">Job Expires In</label>
+                                    <select class="form-select" id="expires_in_days" name="expires_in_days">
+                                        <option value="30" selected>30 days</option>
+                                        <option value="60">60 days</option>
+                                        <option value="90">90 days</option>
+                                        <option value="120">120 days</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="is_featured" name="is_featured">
+                                    <label class="form-check-label" for="is_featured">
+                                        Feature this job (appears in featured jobs section)
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Submit Buttons -->
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-check me-2"></i>Post Job
+                                </button>
+                                <a href="{{ url_for('main.recruiter_dashboard') }}" class="btn btn-outline-light btn-lg ms-3">
+                                    Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Skills management
+let selectedSkills = [];
+
+function addSkill(skill) {
+    if (!selectedSkills.includes(skill) && skill.trim() !== '') {
+        selectedSkills.push(skill);
+        updateSkillsDisplay();
+    }
+}
+
+function removeSkill(skill) {
+    selectedSkills = selectedSkills.filter(s => s !== skill);
+    updateSkillsDisplay();
+}
+
+function updateSkillsDisplay() {
+    const container = document.getElementById('skills_tags');
+    container.innerHTML = '';
+    
+    selectedSkills.forEach(skill => {
+        const tag = document.createElement('span');
+        tag.className = 'skill-tag';
+        tag.innerHTML = `
+            ${skill}
+            <button type="button" class="skill-tag-remove" onclick="removeSkill('${skill}')">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        container.appendChild(tag);
+        
+        // Add hidden input for form submission
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'skills';
+        input.value = skill;
+        container.appendChild(input);
+    });
+}
+
+// Skills input handling
+document.getElementById('skills_input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const skill = this.value.trim();
+        if (skill) {
+            addSkill(skill);
+            this.value = '';
+        }
+    }
+});
+
+// Popular skills click handling
+document.querySelectorAll('.skill-suggestion').forEach(element => {
+    element.addEventListener('click', function() {
+        const skill = this.dataset.skill;
+        addSkill(skill);
+        this.style.display = 'none'; // Hide after adding
+    });
+});
+
+// Form validation
+document.querySelector('.job-form').addEventListener('submit', function(e) {
+    if (selectedSkills.length === 0) {
+        e.preventDefault();
+        alert('Please add at least one skill for this job.');
+        document.getElementById('skills_input').focus();
+        return false;
+    }
+});
+
+// Character counters for textareas
+function addCharacterCounter(textareaId, maxLength) {
+    const textarea = document.getElementById(textareaId);
+    const counter = document.createElement('div');
+    counter.className = 'character-counter';
+    textarea.parentNode.appendChild(counter);
+    
+    function updateCounter() {
+        const length = textarea.value.length;
+        counter.textContent = `${length}/${maxLength} characters`;
+        
+        if (length > maxLength * 0.9) {
+            counter.classList.add('text-warning');
+        } else {
+            counter.classList.remove('text-warning');
+        }
+    }
+    
+    textarea.addEventListener('input', updateCounter);
+    updateCounter();
+}
+
+// Add character counters
+addCharacterCounter('description', 2000);
+addCharacterCounter('responsibilities', 1000);
+addCharacterCounter('requirements', 1000);
+</script>
+{% endblock %}
