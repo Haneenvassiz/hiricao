@@ -768,6 +768,7 @@ def log_anti_cheat_violation():
     description = data.get('description', '')
     
     if test_result_id and violation_type:
+        from models import AntiCheatLog
         log_entry = AntiCheatLog(
             test_result_id=test_result_id,
             violation_type=violation_type,

@@ -29,21 +29,21 @@
                         <a href="{{ url_for('auth.register', role='jobseeker') }}" class="btn btn-primary btn-lg">
                             <i class="fas fa-briefcase me-2"></i>Explore Careers
                         </a>
-                        <a href="{{ url_for('auth.register', role='recruiter') }}" class="btn btn-outline-light btn-lg">
+                        <a href="{{ url_for('auth.register', role='recruiter') }}" class="btn btn-outline-primary btn-lg">
                             <i class="fas fa-building me-2"></i>Hire Excellence
                         </a>
                         {% elif current_user.role == 'recruiter' %}
                         <a href="{{ url_for('main.post_job') }}" class="btn btn-primary btn-lg">
                             <i class="fas fa-plus-circle me-2"></i>Post Premium Job
                         </a>
-                        <a href="{{ url_for('main.recruiter_dashboard') }}" class="btn btn-outline-light btn-lg">
+                        <a href="{{ url_for('main.recruiter_dashboard') }}" class="btn btn-outline-primary btn-lg">
                             <i class="fas fa-chart-line me-2"></i>Analytics Dashboard
                         </a>
                         {% else %}
                         <a href="{{ url_for('main.jobs') }}" class="btn btn-primary btn-lg">
                             <i class="fas fa-search me-2"></i>Discover Opportunities
                         </a>
-                        <a href="{{ url_for('main.jobseeker_dashboard') }}" class="btn btn-outline-light btn-lg">
+                        <a href="{{ url_for('main.jobseeker_dashboard') }}" class="btn btn-outline-primary btn-lg">
                             <i class="fas fa-user-circle me-2"></i>My Profile
                         </a>
                         {% endif %}
@@ -54,19 +54,19 @@
                         <div class="col-md-4">
                             <div class="text-center">
                                 <div class="display-6 fw-bold text-primary mb-1">2.5K+</div>
-                                <p class="text-light-75 fw-medium mb-0">Premium Jobs</p>
+                                <p class="text-secondary fw-medium mb-0">Premium Jobs</p>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="text-center">
                                 <div class="display-6 fw-bold text-primary mb-1">800+</div>
-                                <p class="text-light-75 fw-medium mb-0">Elite Companies</p>
+                                <p class="text-secondary fw-medium mb-0">Elite Companies</p>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="text-center">
                                 <div class="display-6 fw-bold text-primary mb-1">15K+</div>
-                                <p class="text-light-75 fw-medium mb-0">Professionals</p>
+                                <p class="text-secondary fw-medium mb-0">Professionals</p>
                             </div>
                         </div>
                     </div>
