@@ -11,12 +11,15 @@ class AIService:
         self.groq_api_key = os.environ.get('GROQ_API_KEY', '')
         self.groq_base_url = 'https://api.groq.com/openai/v1'
         
-        if not self.groq_api_key:
-            current_app.logger.warning("GROQ_API_KEY not found in environment variables")
+        # Note: Logging will be done in methods that have app context
     
     def generate_assessment(self, job) -> Dict[str, Any]:
         """Generate AI-powered assessment for a job"""
         if not self.groq_api_key:
+            try:
+                current_app.logger.warning("GROQ_API_KEY not found - using fallback assessment")
+            except RuntimeError:
+                pass  # No app context available
             return self._get_fallback_assessment(job)
         
         try:
