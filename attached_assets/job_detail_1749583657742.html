@@ -1,0 +1,397 @@
+{% extends "base.html" %}
+
+{% block title %}{{ job.title }} - Hirica{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('jobs') }}" class="text-decoration-none">Jobs</a></li>
+            <li class="breadcrumb-item active">{{ job.title }}</li>
+        </ol>
+    </nav>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Job Header -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-start mb-4">
+                        <div class="company-logo bg-primary text-white rounded me-4 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="fas fa-building fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h1 class="fw-bold text-dark mb-2">{{ job.title }}</h1>
+                            <div class="d-flex flex-wrap gap-3 text-muted mb-3">
+                                <span><i class="fas fa-building me-1"></i>{{ job.recruiter.company or 'Company' }}</span>
+                                <span><i class="fas fa-map-marker-alt me-1"></i>{{ job.location }}</span>
+                                <span><i class="fas fa-briefcase me-1"></i>{{ job.employment_type }}</span>
+                                <span><i class="fas fa-layer-group me-1"></i>{{ job.experience_level }}</span>
+                            </div>
+                            
+                            {% if job.salary_min and job.salary_max %}
+                            <div class="mb-3">
+                                <span class="badge bg-success badge-lg fs-6">
+                                    <i class="fas fa-dollar-sign me-1"></i>
+                                    ${{ "{:,}".format(job.salary_min) }} - ${{ "{:,}".format(job.salary_max) }} per year
+                                </span>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="d-flex flex-wrap gap-2">
+                                <span class="badge bg-primary">{{ job.employment_type }}</span>
+                                <span class="badge bg-info">{{ job.experience_level }}</span>
+                                {% if job.degree_required %}
+                                <span class="badge bg-warning text-dark">Degree Required</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Application Status -->
+                    {% if current_user.is_authenticated and current_user.role == 'jobseeker' %}
+                    {% if has_applied %}
+                    <div class="alert alert-info border-0">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h6 class="alert-heading mb-1"><i class="fas fa-check-circle me-2"></i>Application Submitted</h6>
+                                <p class="mb-0">You applied on {{ application.applied_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                                <small>Status: <span class="fw-semibold">{{ application.status.replace('_', ' ').title() }}</span></small>
+                            </div>
+                            {% if application.status == 'assessment_sent' %}
+                            <div class="col-auto">
+                                <a href="{{ url_for('take_assessment', app_id=application.id) }}" class="btn btn-warning">
+                                    <i class="fas fa-tasks me-1"></i>Take Assessment
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                    
+                    <!-- Job Stats -->
+                    <div class="row g-3 text-center border-top pt-3">
+                        <div class="col-4">
+                            <div class="fw-bold text-primary">{{ job.applications|length }}</div>
+                            <small class="text-muted">Applicants</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="fw-bold text-success">{{ (job.created_at.date() - job.created_at.date()).days + 1 }}</div>
+                            <small class="text-muted">Days Posted</small>
+                        </div>
+                        <div class="col-4">
+                            {% if job.deadline %}
+                            <div class="fw-bold text-warning">{{ (job.deadline.date() - job.created_at.date()).days }}</div>
+                            <small class="text-muted">Days Left</small>
+                            {% else %}
+                            <div class="fw-bold text-info">Open</div>
+                            <small class="text-muted">No Deadline</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Job Description -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="fw-bold text-dark mb-3">Job Description</h5>
+                    <div class="job-description">
+                        {{ job.description|replace('\n', '<br>')|safe }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Responsibilities -->
+            {% if job.responsibilities %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="fw-bold text-dark mb-3">Key Responsibilities</h5>
+                    <div class="job-responsibilities">
+                        {{ job.responsibilities|replace('\n', '<br>')|safe }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Requirements -->
+            {% if job.requirements %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="fw-bold text-dark mb-3">Requirements</h5>
+                    <div class="job-requirements">
+                        {{ job.requirements|replace('\n', '<br>')|safe }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Skills -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="fw-bold text-dark mb-3">Required Skills</h5>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for skill in job.get_skills_list() %}
+                        <span class="badge bg-light text-dark border px-3 py-2">
+                            <i class="fas fa-check-circle text-success me-1"></i>{{ skill }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Apply Section -->
+            {% if current_user.is_authenticated and current_user.role == 'jobseeker' %}
+            {% if not has_applied %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="fw-bold text-dark mb-3">Apply for this position</h5>
+                    <p class="text-muted mb-3">Ready to take the next step in your career?</p>
+                    
+                    <button type="button" class="btn btn-primary btn-lg w-100 mb-3" data-bs-toggle="modal" data-bs-target="#applyModal">
+                        <i class="fas fa-paper-plane me-2"></i>Apply Now
+                    </button>
+                    
+                    <div class="small text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        You'll need to submit a cover letter and your application will be reviewed by the hiring team.
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- Assessment Status Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="fw-bold text-secondary mb-3">
+                        <i class="fas fa-clipboard-check me-2"></i>Assessment Status
+                    </h5>
+                    
+                    {% if application and application.status == 'pending' %}
+                    <div class="alert alert-info border-0 mb-3">
+                        <h6 class="alert-heading">Application Submitted</h6>
+                        <p class="mb-2">Your application is under review by the recruiter.</p>
+                        <a href="{{ url_for('request_assessment', job_id=job.id) }}" class="btn btn-secondary btn-lg w-100">
+                            <i class="fas fa-brain me-2"></i>Request AI Assessment
+                        </a>
+                        <div class="small text-muted mt-2">
+                            <i class="fas fa-lightbulb me-1"></i>
+                            Take the next step by requesting an AI-powered skill assessment to demonstrate your capabilities.
+                        </div>
+                    </div>
+                    
+                    {% elif application and application.status == 'assessment_requested' %}
+                    <div class="alert alert-warning border-0 mb-3">
+                        <h6 class="alert-heading">Assessment Pending Approval</h6>
+                        <p class="mb-0">Your assessment request has been sent to the recruiter. You'll be notified once it's approved.</p>
+                    </div>
+                    
+                    {% elif application and application.status == 'assessment_sent' %}
+                    <div class="alert alert-success border-0 mb-3">
+                        <h6 class="alert-heading">Assessment Ready!</h6>
+                        <p class="mb-2">Your AI-powered assessment has been approved and is ready to take.</p>
+                        <a href="{{ url_for('take_assessment', app_id=application.id) }}" class="btn btn-success btn-lg w-100">
+                            <i class="fas fa-play-circle me-2"></i>Take Assessment Now
+                        </a>
+                        <div class="small text-muted mt-2">
+                            <i class="fas fa-clock me-1"></i>
+                            Complete within 24 hours • AI-proctored • Anti-cheating measures active
+                        </div>
+                    </div>
+                    
+                    {% elif application and application.status == 'completed' %}
+                    <div class="alert alert-primary border-0 mb-3">
+                        <h6 class="alert-heading">Assessment Completed</h6>
+                        <p class="mb-0">You've successfully completed the assessment. Results are being reviewed by the recruiter.</p>
+                    </div>
+                    
+                    {% else %}
+                    <div class="alert alert-secondary border-0 mb-3">
+                        <h6 class="alert-heading">Application Submitted</h6>
+                        <p class="mb-0">Your application has been submitted successfully and is under review.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body text-center">
+                    <h5 class="fw-bold text-dark mb-3">Ready to Apply?</h5>
+                    <p class="text-muted mb-3">Sign in or create an account to apply for this position.</p>
+                    <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg w-100 mb-2">Sign In</a>
+                    <a href="{{ url_for('register') }}" class="btn btn-outline-primary w-100">Create Account</a>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Job Info -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h6 class="fw-bold text-dark mb-3">Job Information</h6>
+                    <div class="job-info">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Employment Type:</span>
+                            <span class="fw-semibold">{{ job.employment_type }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Experience Level:</span>
+                            <span class="fw-semibold">{{ job.experience_level }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Location:</span>
+                            <span class="fw-semibold">{{ job.location }}</span>
+                        </div>
+                        {% if job.deadline %}
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Deadline:</span>
+                            <span class="fw-semibold">{{ job.deadline.strftime('%b %d, %Y') }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Posted:</span>
+                            <span class="fw-semibold">{{ job.created_at.strftime('%b %d, %Y') }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Degree Required:</span>
+                            <span class="fw-semibold">{{ 'Yes' if job.degree_required else 'No' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Share Job -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="fw-bold text-dark mb-3">Share this job</h6>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary btn-sm flex-grow-1" onclick="shareJob('linkedin')">
+                            <i class="fab fa-linkedin me-1"></i>LinkedIn
+                        </button>
+                        <button class="btn btn-outline-info btn-sm flex-grow-1" onclick="shareJob('twitter')">
+                            <i class="fab fa-twitter me-1"></i>Twitter
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="copyJobLink()">
+                            <i class="fas fa-link"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Apply Modal -->
+{% if current_user.is_authenticated and current_user.role == 'jobseeker' and not has_applied %}
+<div class="modal fade" id="applyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Apply for {{ job.title }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('apply_job', job_id=job.id) }}">
+                <div class="modal-body">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="alert alert-info border-0 mb-4">
+                        <h6 class="alert-heading">Application for: {{ job.title }}</h6>
+                        <p class="mb-0">{{ job.recruiter.company or 'Company' }} • {{ job.location }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.cover_letter.label(class="form-label fw-semibold") }}
+                        {{ form.cover_letter(class="form-control", rows="8", placeholder="Write a compelling cover letter that highlights your relevant experience and why you're interested in this position...") }}
+                        {% if form.cover_letter.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.cover_letter.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Tip: Mention specific skills from the job requirements and explain how your experience aligns with their needs.</div>
+                    </div>
+                    
+                    {% if not current_user.resume_filename %}
+                    <div class="alert alert-warning border-0">
+                        <h6 class="alert-heading">Resume Missing</h6>
+                        <p class="mb-2">Consider uploading your resume to strengthen your application.</p>
+                        <a href="{{ url_for('profile') }}" class="btn btn-sm btn-warning">Upload Resume</a>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success border-0">
+                        <h6 class="alert-heading">Resume Ready</h6>
+                        <p class="mb-0">Your resume will be included with this application.</p>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    {{ form.submit(class="btn btn-primary btn-lg px-4") }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Convert newlines to <br> tags
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.job-description, .job-responsibilities, .job-requirements').forEach(element => {
+        element.innerHTML = element.innerHTML.replace(/\n/g, '<br>');
+    });
+});
+
+function shareJob(platform) {
+    const url = window.location.href;
+    const title = "{{ job.title }} at {{ job.recruiter.company or 'Company' }}";
+    const text = "Check out this job opportunity: ";
+    
+    let shareUrl = '';
+    if (platform === 'linkedin') {
+        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+    } else if (platform === 'twitter') {
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text + title)}&url=${encodeURIComponent(url)}`;
+    }
+    
+    if (shareUrl) {
+        window.open(shareUrl, '_blank', 'width=600,height=400');
+    }
+}
+
+function copyJobLink() {
+    navigator.clipboard.writeText(window.location.href).then(function() {
+        // Show feedback
+        const btn = event.target.closest('button');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i>';
+        btn.classList.add('btn-success');
+        btn.classList.remove('btn-outline-secondary');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-outline-secondary');
+        }, 2000);
+    });
+}
+
+// Auto-resize cover letter textarea
+document.addEventListener('DOMContentLoaded', function() {
+    const textarea = document.querySelector('#cover_letter');
+    if (textarea) {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    }
+});
+</script>
+{% endblock %}

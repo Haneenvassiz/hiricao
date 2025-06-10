@@ -1,368 +1,457 @@
 {% extends "base.html" %}
 
-{% block title %}Generate Assessment - Hirica{% endblock %}
+{% block title %}Generate Assessment - {{ job.title }} - Hirica{% endblock %}
 
 {% block content %}
-<div class="dashboard-container">
-    <div class="container">
-        <!-- Header -->
-        <div class="dashboard-header mb-4">
-            <div class="row align-items-center">
-                <div class="col">
-                    <h1 class="dashboard-title">
-                        <i class="fas fa-robot me-3"></i>Generate AI Assessment
-                    </h1>
-                    <p class="text-light-75 mb-0">
-                        Create a comprehensive assessment for 
-                        <strong>{{ application.jobseeker.user.get_full_name() }}</strong>
-                    </p>
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.recruiter_dashboard') }}" class="text-decoration-none">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.view_applications', job_id=job.id) }}" class="text-decoration-none">Applications</a></li>
+                    <li class="breadcrumb-item active">Generate Assessment</li>
+                </ol>
+            </nav>
+            <h1 class="display-6 fw-bold text-white mb-2">Generate AI Assessment</h1>
+            <p class="text-secondary">Creating assessment for {{ job.title }}</p>
+        </div>
+    </div>
+
+    {% if assessment %}
+    <!-- Generated Assessment -->
+    <div id="assessment-content">
+        <!-- Assessment Overview -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-brain me-2"></i>AI Generated Assessment
+                </h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary btn-sm" onclick="regenerateAll()">
+                        <i class="fas fa-redo me-1"></i>Regenerate All
+                    </button>
+                    <button class="btn btn-outline-success btn-sm" onclick="addCustomQuestion()">
+                        <i class="fas fa-plus me-1"></i>Add Question
+                    </button>
                 </div>
-                <div class="col-auto">
-                    <a href="{{ url_for('main.view_applications', job_id=application.job_id) }}" class="btn btn-outline-light">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Applications
-                    </a>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6 class="text-primary">Assessment Details</h6>
+                        <p><strong>Total Questions:</strong> <span id="total-questions">{{ assessment.get_questions_list() | length }}</span></p>
+                        <p><strong>Estimated Time:</strong> <span id="total-time">{{ assessment.time_limit }}</span> minutes</p>
+                        <p><strong>Difficulty:</strong> {{ assessment.difficulty_level or 'Adaptive' }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-primary">Project Components</h6>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="enable-short-project" {{ 'checked' if assessment.get_projects_list() else '' }}>
+                            <label class="form-check-label" for="enable-short-project">
+                                Short-term Project (2-4 hours)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="enable-long-project">
+                            <label class="form-check-label" for="enable-long-project">
+                                Extended Project (1-3 days)
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-primary">Global Anti-Cheat Settings</h6>
+                        <div class="anti-cheat-settings">
+                            {% set global_rules = assessment.get_anti_cheat_rules() %}
+                            <div class="form-check form-check-sm">
+                                <input class="form-check-input" type="checkbox" id="global-webcam" {{ 'checked' if global_rules.get('webcam_required', false) else '' }}>
+                                <label class="form-check-label" for="global-webcam">Webcam Monitoring</label>
+                            </div>
+                            <div class="form-check form-check-sm">
+                                <input class="form-check-input" type="checkbox" id="global-fullscreen" {{ 'checked' if global_rules.get('fullscreen_required', true) else '' }}>
+                                <label class="form-check-label" for="global-fullscreen">Fullscreen Mode</label>
+                            </div>
+                            <div class="form-check form-check-sm">
+                                <input class="form-check-input" type="checkbox" id="global-tab-switch" {{ 'checked' if global_rules.get('allow_tab_switching', false) else '' }}>
+                                <label class="form-check-label" for="global-tab-switch">Allow Tab Switching</label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="row">
-            <!-- Candidate Info -->
-            <div class="col-lg-4">
-                <div class="dashboard-card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-user me-2"></i>Candidate Information
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="candidate-info">
-                            <div class="candidate-avatar mb-3">
-                                <i class="fas fa-user-circle"></i>
-                                <h6 class="mt-2 mb-0">{{ application.jobseeker.user.get_full_name() }}</h6>
-                                <small class="text-light-75">{{ application.jobseeker.user.email }}</small>
+        <!-- Questions List -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-question-circle me-2"></i>Assessment Questions
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div id="questions-list">
+                    {% for question in assessment.get_questions_list() %}
+                    <div class="question-item border-bottom p-4" data-question-id="{{ loop.index0 }}">
+                        <div class="row">
+                            <div class="col-lg-8">
+                                <div class="d-flex align-items-start mb-3">
+                                    <span class="badge bg-primary me-3 mt-1">Q{{ loop.index }}</span>
+                                    <div class="flex-grow-1">
+                                        <h6 class="text-white mb-2">{{ question.question }}</h6>
+                                        <div class="question-meta d-flex flex-wrap gap-3 text-secondary small">
+                                            <span><i class="fas fa-tag me-1"></i>{{ question.type|title }}</span>
+                                            <span><i class="fas fa-clock me-1"></i>{{ question.time_limit }} minutes</span>
+                                            <span><i class="fas fa-signal me-1"></i>{{ question.difficulty|title }}</span>
+                                            {% if question.word_limit %}
+                                            <span><i class="fas fa-align-left me-1"></i>{{ question.word_limit }} words max</span>
+                                            {% endif %}
+                                        </div>
+                                        {% if question.type == 'multiple_choice' and question.options %}
+                                        <div class="mt-2">
+                                            <small class="text-muted">Options:</small>
+                                            {% for option in question.options %}
+                                            <div class="text-secondary small ms-3">{{ loop.index }}. {{ option }}</div>
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
                             </div>
-                            
-                            <div class="candidate-details">
-                                {% if application.jobseeker.current_position %}
-                                <div class="detail-item">
-                                    <i class="fas fa-briefcase me-2"></i>
-                                    <span>{{ application.jobseeker.current_position }}</span>
+                            <div class="col-lg-4">
+                                <div class="question-controls">
+                                    <!-- Time Control -->
+                                    <div class="mb-3">
+                                        <label class="form-label small">Time Limit (minutes)</label>
+                                        <input type="number" class="form-control form-control-sm time-input" 
+                                               value="{{ question.time_limit }}" min="1" max="120" 
+                                               data-question-id="{{ loop.index0 }}">
+                                    </div>
+                                    
+                                    <!-- Anti-Cheat Rules -->
+                                    <div class="mb-3">
+                                        <label class="form-label small">Anti-Cheat Rules</label>
+                                        <div class="anti-cheat-rules">
+                                            {% set rules = question.rules or {} %}
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="checkbox" 
+                                                       id="copy-paste-{{ loop.index0 }}" 
+                                                       {{ 'checked' if rules.get('allow_copy_paste', false) else '' }}>
+                                                <label class="form-check-label" for="copy-paste-{{ loop.index0 }}">
+                                                    Allow Copy/Paste
+                                                </label>
+                                            </div>
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="checkbox" 
+                                                       id="right-click-{{ loop.index0 }}" 
+                                                       {{ 'checked' if rules.get('allow_right_click', false) else '' }}>
+                                                <label class="form-check-label" for="right-click-{{ loop.index0 }}">
+                                                    Allow Right Click
+                                                </label>
+                                            </div>
+                                            <div class="form-check form-check-sm">
+                                                <input class="form-check-input" type="checkbox" 
+                                                       id="ai-tools-{{ loop.index0 }}" 
+                                                       {{ 'checked' if rules.get('allow_ai_tools', false) else '' }}>
+                                                <label class="form-check-label" for="ai-tools-{{ loop.index0 }}">
+                                                    Allow AI Tools
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Action Buttons -->
+                                    <div class="d-flex gap-1">
+                                        <button class="btn btn-outline-warning btn-sm" 
+                                                onclick="editQuestion({{ loop.index0 }})" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-outline-info btn-sm" 
+                                                onclick="regenerateQuestion({{ loop.index0 }})" title="Regenerate">
+                                            <i class="fas fa-redo"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger btn-sm" 
+                                                onclick="deleteQuestion({{ loop.index0 }})" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
                                 </div>
-                                {% endif %}
-                                
-                                {% if application.jobseeker.location %}
-                                <div class="detail-item">
-                                    <i class="fas fa-map-marker-alt me-2"></i>
-                                    <span>{{ application.jobseeker.location }}</span>
-                                </div>
-                                {% endif %}
-                                
-                                {% if application.jobseeker.experience_years %}
-                                <div class="detail-item">
-                                    <i class="fas fa-clock me-2"></i>
-                                    <span>{{ application.jobseeker.experience_years }} years experience</span>
-                                </div>
-                                {% endif %}
-                                
-                                {% if application.jobseeker.linkedin_url %}
-                                <div class="detail-item">
-                                    <i class="fab fa-linkedin me-2"></i>
-                                    <a href="{{ application.jobseeker.linkedin_url }}" target="_blank" class="text-primary">
-                                        LinkedIn Profile
-                                    </a>
-                                </div>
-                                {% endif %}
-                                
-                                {% if application.jobseeker.github_url %}
-                                <div class="detail-item">
-                                    <i class="fab fa-github me-2"></i>
-                                    <a href="{{ application.jobseeker.github_url }}" target="_blank" class="text-primary">
-                                        GitHub Profile
-                                    </a>
-                                </div>
-                                {% endif %}
-                            </div>
-                            
-                            {% if application.cover_letter %}
-                            <div class="mt-3">
-                                <h6 class="text-white">Cover Letter</h6>
-                                <div class="cover-letter-preview">
-                                    {{ application.cover_letter[:200] }}
-                                    {% if application.cover_letter|length > 200 %}...{% endif %}
-                                </div>
-                                <button class="btn btn-sm btn-outline-primary mt-2" onclick="showFullCoverLetter()">
-                                    Read Full Letter
-                                </button>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Job Info -->
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-briefcase me-2"></i>Job Details
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <h6 class="text-white">{{ application.job.title }}</h6>
-                        <div class="job-meta mb-3">
-                            <span class="badge bg-secondary me-2">{{ application.job.employment_type }}</span>
-                            <span class="badge bg-info">{{ application.job.experience_level }}</span>
-                        </div>
-                        
-                        <div class="detail-item">
-                            <i class="fas fa-map-marker-alt me-2"></i>
-                            <span>{{ application.job.location }}</span>
-                        </div>
-                        
-                        {% if application.job.get_skills_list() %}
-                        <div class="mt-3">
-                            <h6 class="text-white small">Required Skills</h6>
-                            <div class="skills-list">
-                                {% for skill in application.job.get_skills_list()[:5] %}
-                                <span class="skill-badge">{{ skill }}</span>
-                                {% endfor %}
-                                {% if application.job.get_skills_list()|length > 5 %}
-                                <span class="text-light-75">+{{ application.job.get_skills_list()|length - 5 }} more</span>
-                                {% endif %}
                             </div>
                         </div>
-                        {% endif %}
                     </div>
+                    {% endfor %}
                 </div>
             </div>
+        </div>
 
-            <!-- Assessment Generation -->
-            <div class="col-lg-8">
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-magic me-2"></i>AI Assessment Generation
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="assessment-preview" id="assessmentPreview" style="display: none;">
-                            <!-- Generated assessment will appear here -->
+        <!-- Projects Section -->
+        <div class="card mb-4" id="projects-section" style="display: {{ 'block' if assessment.get_projects_list() else 'none' }};">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-project-diagram me-2"></i>Project Assignments
+                </h5>
+            </div>
+            <div class="card-body" id="projects-content">
+                {% for project in assessment.get_projects_list() %}
+                <div class="project-item border rounded p-3 mb-3" data-project-id="{{ loop.index0 }}">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h6 class="text-white">{{ project.title }}</h6>
+                            <p class="text-secondary mb-2">{{ project.description }}</p>
+                            <div class="project-meta d-flex flex-wrap gap-3 text-secondary small">
+                                <span><i class="fas fa-clock me-1"></i>{{ project.duration }} hours</span>
+                                <span><i class="fas fa-signal me-1"></i>{{ project.difficulty|title }}</span>
+                                <span><i class="fas fa-code me-1"></i>{{ project.type|title }}</span>
+                            </div>
                         </div>
-                        
-                        <div class="generation-form" id="generationForm">
-                            <div class="mb-4">
-                                <h6 class="text-white">What the AI will consider:</h6>
-                                <ul class="ai-considerations">
-                                    <li><i class="fas fa-check text-success me-2"></i>Job requirements and responsibilities</li>
-                                    <li><i class="fas fa-check text-success me-2"></i>Required skills and experience level</li>
-                                    <li><i class="fas fa-check text-success me-2"></i>Industry best practices</li>
-                                    <li><i class="fas fa-check text-success me-2"></i>Role-specific technical knowledge</li>
-                                    <li><i class="fas fa-check text-success me-2"></i>Problem-solving scenarios</li>
-                                </ul>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <h6 class="text-white">Assessment Components</h6>
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <div class="assessment-component">
-                                            <i class="fas fa-question-circle"></i>
-                                            <div>
-                                                <strong>Multiple Choice Questions</strong>
-                                                <p class="small text-light-75 mb-0">Technical knowledge and concepts</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="assessment-component">
-                                            <i class="fas fa-edit"></i>
-                                            <div>
-                                                <strong>Text-based Questions</strong>
-                                                <p class="small text-light-75 mb-0">Problem-solving and scenarios</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="assessment-component">
-                                            <i class="fas fa-code"></i>
-                                            <div>
-                                                <strong>Coding Challenges</strong>
-                                                <p class="small text-light-75 mb-0">Practical programming tasks</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="assessment-component">
-                                            <i class="fas fa-project-diagram"></i>
-                                            <div>
-                                                <strong>Project Assignments</strong>
-                                                <p class="small text-light-75 mb-0">Real-world application tasks</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <h6 class="text-white">Anti-Cheat Features</h6>
-                                <div class="anti-cheat-features">
-                                    <div class="feature-item">
-                                        <i class="fas fa-video text-primary me-2"></i>
-                                        <span>Webcam monitoring and face detection</span>
-                                    </div>
-                                    <div class="feature-item">
-                                        <i class="fas fa-eye text-primary me-2"></i>
-                                        <span>Tab switching and focus detection</span>
-                                    </div>
-                                    <div class="feature-item">
-                                        <i class="fas fa-shield-alt text-primary me-2"></i>
-                                        <span>Copy-paste and right-click prevention</span>
-                                    </div>
-                                    <div class="feature-item">
-                                        <i class="fas fa-expand text-primary me-2"></i>
-                                        <span>Full-screen mode enforcement</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <form method="POST" class="generation-options">
-                                <div class="mb-3">
-                                    <label class="form-label">Assessment Focus (Optional)</label>
-                                    <textarea class="form-control" name="focus_areas" rows="3" 
-                                              placeholder="Specify any particular areas you want the assessment to focus on..."></textarea>
-                                </div>
-                                
-                                <div class="row g-3 mb-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label">Difficulty Level</label>
-                                        <select class="form-select" name="difficulty">
-                                            <option value="auto" selected>Auto (based on experience level)</option>
-                                            <option value="beginner">Beginner</option>
-                                            <option value="intermediate">Intermediate</option>
-                                            <option value="advanced">Advanced</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Estimated Duration</label>
-                                        <select class="form-select" name="duration">
-                                            <option value="60">1 hour</option>
-                                            <option value="90" selected>1.5 hours</option>
-                                            <option value="120">2 hours</option>
-                                            <option value="180">3 hours</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                
-                                <div class="generation-actions">
-                                    <button type="submit" class="btn btn-primary btn-lg me-3" id="generateBtn">
-                                        <i class="fas fa-magic me-2"></i>Generate Assessment
-                                        <span class="spinner-border spinner-border-sm ms-2" style="display: none;" id="generateSpinner"></span>
-                                    </button>
-                                    <button type="button" class="btn btn-outline-light btn-lg" onclick="showManualCreation()">
-                                        <i class="fas fa-edit me-2"></i>Create Manually
-                                    </button>
-                                </div>
-                            </form>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-outline-warning btn-sm" onclick="editProject({{ loop.index0 }})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-info btn-sm" onclick="regenerateProject({{ loop.index0 }})">
+                                <i class="fas fa-redo"></i>
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="deleteProject({{ loop.index0 }})">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
                     </div>
+                    {% if project.requirements %}
+                    <div class="mt-3">
+                        <h6 class="text-primary small">Requirements:</h6>
+                        <ul class="text-secondary small mb-0">
+                            {% for req in project.requirements %}
+                            <li>{{ req }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
                 </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Assessment Actions -->
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-center gap-3">
+                    <button class="btn btn-outline-secondary" onclick="saveDraft()">
+                        <i class="fas fa-save me-2"></i>Save as Draft
+                    </button>
+                    <button class="btn btn-outline-warning" onclick="pauseAssessment()">
+                        <i class="fas fa-pause me-2"></i>Pause for Later
+                    </button>
+                    <button class="btn btn-danger" onclick="declineAssessment()">
+                        <i class="fas fa-times me-2"></i>Decline Assessment
+                    </button>
+                    <button class="btn btn-success btn-lg" onclick="approveAssessment()">
+                        <i class="fas fa-check me-2"></i>Approve & Send to Candidate
+                    </button>
+                </div>
+                <p class="text-muted mt-3 mb-0">
+                    Once approved, the candidate will receive notification to take the assessment
+                </p>
             </div>
         </div>
     </div>
+
+    {% else %}
+    <!-- Generate Initial Assessment -->
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <div class="mb-4">
+                <i class="fas fa-brain fa-3x text-primary mb-3"></i>
+                <h4 class="text-white">Generate AI Assessment</h4>
+                <p class="text-secondary">AI will analyze the job requirements and create a comprehensive assessment</p>
+            </div>
+            
+            <form method="POST" id="generate-form">
+                <div class="row justify-content-center mb-4">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Assessment Difficulty</label>
+                            <select class="form-select" name="difficulty" required>
+                                <option value="beginner">Beginner Level</option>
+                                <option value="intermediate" selected>Intermediate Level</option>
+                                <option value="advanced">Advanced Level</option>
+                                <option value="expert">Expert Level</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Number of Questions</label>
+                            <select class="form-select" name="question_count" required>
+                                <option value="5">5 Questions (Quick Assessment)</option>
+                                <option value="10" selected>10 Questions (Standard)</option>
+                                <option value="15">15 Questions (Comprehensive)</option>
+                                <option value="20">20 Questions (Thorough)</option>
+                            </select>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="include-projects" name="include_projects">
+                            <label class="form-check-label" for="include-projects">
+                                Include Project Assignments
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-magic me-2"></i>Generate Assessment with AI
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
 </div>
 
-<!-- Cover Letter Modal -->
-<div class="modal fade" id="coverLetterModal" tabindex="-1">
+<!-- Modals -->
+<!-- Edit Question Modal -->
+<div class="modal fade" id="editQuestionModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content bg-dark">
-            <div class="modal-header border-secondary">
-                <h5 class="modal-title text-white">Cover Letter</h5>
+            <div class="modal-header">
+                <h5 class="modal-title text-white">Edit Question</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="cover-letter-full text-light-75">
-                    {{ application.cover_letter }}
-                </div>
+                <form id="edit-question-form">
+                    <div class="mb-3">
+                        <label class="form-label">Question Type</label>
+                        <select class="form-select" id="edit-question-type">
+                            <option value="text">Text Answer</option>
+                            <option value="multiple_choice">Multiple Choice</option>
+                            <option value="coding">Coding Challenge</option>
+                            <option value="case_study">Case Study</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Question</label>
+                        <textarea class="form-control" id="edit-question-text" rows="4"></textarea>
+                    </div>
+                    <div class="mb-3" id="edit-options-section" style="display: none;">
+                        <label class="form-label">Options (one per line)</label>
+                        <textarea class="form-control" id="edit-question-options" rows="4" 
+                                  placeholder="Option 1&#10;Option 2&#10;Option 3&#10;Option 4"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Time Limit (minutes)</label>
+                            <input type="number" class="form-control" id="edit-question-time" min="1" max="120">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Word Limit (optional)</label>
+                            <input type="number" class="form-control" id="edit-question-words">
+                        </div>
+                    </div>
+                </form>
             </div>
-            <div class="modal-footer border-secondary">
-                <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Close</button>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveQuestionEdit()">Save Changes</button>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
 <script>
-function showFullCoverLetter() {
-    const modal = new bootstrap.Modal(document.getElementById('coverLetterModal'));
-    modal.show();
-}
+// Assessment management functions
+let assessmentData = {{ assessment.get_questions_list() | tojson if assessment else '[]' }};
+let projectData = {{ assessment.get_projects_list() | tojson if assessment else '[]' }};
 
-function showManualCreation() {
-    if (confirm('Create assessment manually? This will skip AI generation.')) {
-        window.location.href = '/recruiter/assessment/create/manual?application_id={{ application.id }}';
-    }
-}
-
-// Handle form submission
-document.querySelector('.generation-options').addEventListener('submit', function(e) {
-    const btn = document.getElementById('generateBtn');
-    const spinner = document.getElementById('generateSpinner');
+function editQuestion(questionId) {
+    const question = assessmentData[questionId];
+    document.getElementById('edit-question-type').value = question.type;
+    document.getElementById('edit-question-text').value = question.question;
+    document.getElementById('edit-question-time').value = question.time_limit;
+    document.getElementById('edit-question-words').value = question.word_limit || '';
     
-    btn.disabled = true;
-    spinner.style.display = 'inline-block';
-    
-    // Update button text
-    btn.innerHTML = '<i class="fas fa-magic me-2"></i>Generating Assessment... <span class="spinner-border spinner-border-sm ms-2"></span>';
-});
-
-// Simulate progress updates (in real implementation, this would be WebSocket updates)
-let progressStep = 0;
-const progressSteps = [
-    "Analyzing job requirements...",
-    "Generating technical questions...",
-    "Creating coding challenges...",
-    "Setting up anti-cheat rules...",
-    "Finalizing assessment..."
-];
-
-function updateProgress() {
-    if (progressStep < progressSteps.length) {
-        // In a real implementation, you'd show progress updates
-        console.log(progressSteps[progressStep]);
-        progressStep++;
-        setTimeout(updateProgress, 1000);
+    if (question.type === 'multiple_choice' && question.options) {
+        document.getElementById('edit-question-options').value = question.options.join('\n');
+        document.getElementById('edit-options-section').style.display = 'block';
+    } else {
+        document.getElementById('edit-options-section').style.display = 'none';
     }
+    
+    document.getElementById('edit-question-form').dataset.questionId = questionId;
+    new bootstrap.Modal(document.getElementById('editQuestionModal')).show();
 }
 
-// Auto-save form data
-function saveFormData() {
-    const formData = new FormData(document.querySelector('.generation-options'));
-    const data = Object.fromEntries(formData);
-    localStorage.setItem('assessmentGeneration', JSON.stringify(data));
-}
-
-// Restore form data
-function restoreFormData() {
-    const saved = localStorage.getItem('assessmentGeneration');
-    if (saved) {
-        const data = JSON.parse(saved);
-        Object.keys(data).forEach(key => {
-            const element = document.querySelector(`[name="${key}"]`);
-            if (element) {
-                element.value = data[key];
+function regenerateQuestion(questionId) {
+    if (confirm('Regenerate this question? The current question will be replaced.')) {
+        fetch(`/recruiter/assessment/{{ assessment.id if assessment else 0 }}/regenerate-question`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({question_id: questionId})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error regenerating question: ' + data.error);
             }
         });
     }
 }
 
-// Initialize
+function deleteQuestion(questionId) {
+    if (confirm('Delete this question?')) {
+        assessmentData.splice(questionId, 1);
+        updateQuestionsDisplay();
+    }
+}
+
+function addCustomQuestion() {
+    // Reset form and show modal for new question
+    document.getElementById('edit-question-form').reset();
+    document.getElementById('edit-question-form').dataset.questionId = 'new';
+    new bootstrap.Modal(document.getElementById('editQuestionModal')).show();
+}
+
+function approveAssessment() {
+    if (confirm('Approve and send this assessment to the candidate?')) {
+        fetch(`/recruiter/assessment/{{ assessment.id if assessment else 0 }}/approve`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                questions: assessmentData,
+                projects: projectData,
+                anti_cheat_rules: getGlobalAntiCheatRules()
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Assessment approved and sent to candidate!');
+                window.location.href = data.redirect_url;
+            } else {
+                alert('Error approving assessment: ' + data.error);
+            }
+        });
+    }
+}
+
+function getGlobalAntiCheatRules() {
+    return {
+        webcam_required: document.getElementById('global-webcam').checked,
+        fullscreen_required: document.getElementById('global-fullscreen').checked,
+        allow_tab_switching: document.getElementById('global-tab-switch').checked
+    };
+}
+
+// Initialize page
 document.addEventListener('DOMContentLoaded', function() {
-    restoreFormData();
+    // Handle question type changes in edit modal
+    document.getElementById('edit-question-type').addEventListener('change', function() {
+        const optionsSection = document.getElementById('edit-options-section');
+        optionsSection.style.display = this.value === 'multiple_choice' ? 'block' : 'none';
+    });
     
-    // Auto-save on changes
-    document.querySelector('.generation-options').addEventListener('change', saveFormData);
-    document.querySelector('.generation-options').addEventListener('input', saveFormData);
+    // Handle project toggles
+    document.getElementById('enable-short-project').addEventListener('change', function() {
+        const projectsSection = document.getElementById('projects-section');
+        projectsSection.style.display = this.checked ? 'block' : 'none';
+    });
 });
 </script>
 {% endblock %}

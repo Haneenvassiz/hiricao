@@ -1,307 +1,158 @@
 {% extends "base.html" %}
 
-{% block title %}Taking Assessment - Hirica{% endblock %}
+{% block title %}Assessment - {{ application.job.title }} - Hirica{% endblock %}
 
 {% block head %}
 <style>
-/* Full-screen assessment styles */
-.assessment-fullscreen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: var(--bs-dark);
-    z-index: 9999;
-    overflow: hidden;
-}
-
-.assessment-content {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-}
-
-.assessment-header {
-    background: rgba(0,0,0,0.9);
-    padding: 1rem;
-    border-bottom: 1px solid var(--bs-border-color);
-    flex-shrink: 0;
-}
-
-.assessment-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 2rem;
-}
-
-.assessment-footer {
-    background: rgba(0,0,0,0.9);
-    padding: 1rem;
-    border-top: 1px solid var(--bs-border-color);
-    flex-shrink: 0;
-}
-
-.timer-display {
-    font-family: 'Courier New', monospace;
-    font-size: 1.2rem;
-    font-weight: bold;
-}
-
-.timer-warning {
-    color: #ffc107 !important;
-}
-
-.timer-danger {
-    color: #dc3545 !important;
-    animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.7; }
-    100% { opacity: 1; }
-}
-
-.question-container {
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-.question-card {
-    background: var(--bs-gray-900);
-    border: 1px solid var(--bs-border-color);
-    border-radius: 0.5rem;
-    margin-bottom: 2rem;
-}
-
-.question-rules {
-    background: rgba(255, 193, 7, 0.1);
-    border: 1px solid #ffc107;
-    border-radius: 0.25rem;
-    padding: 0.75rem;
-    margin-bottom: 1rem;
-}
-
-.code-editor {
-    background: #1e1e1e;
-    border: 1px solid var(--bs-border-color);
-    border-radius: 0.25rem;
-    font-family: 'Courier New', monospace;
-    color: #fff;
-    padding: 1rem;
-    min-height: 200px;
-    resize: vertical;
-}
-
-.webcam-feed {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    width: 200px;
-    height: 150px;
-    background: #000;
-    border: 2px solid var(--bs-primary);
-    border-radius: 0.5rem;
-    z-index: 10000;
-}
-
-.violation-alert {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #dc3545;
-    color: white;
-    padding: 2rem;
-    border-radius: 0.5rem;
-    z-index: 10001;
-    text-align: center;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-}
+    body {
+        overflow: hidden;
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+    }
+    
+    .assessment-container {
+        height: 100vh;
+        background: var(--background-dark);
+        position: relative;
+    }
+    
+    .question-container {
+        min-height: 70vh;
+        display: none;
+    }
+    
+    .question-container.active {
+        display: block;
+    }
+    
+    .progress-header {
+        background: var(--background-card);
+        border-bottom: 2px solid var(--primary-color);
+        padding: 1rem 0;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+    
+    .timer-display {
+        background: var(--primary-color);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+    
+    .timer-warning {
+        background: var(--warning-color);
+        color: #000;
+    }
+    
+    .timer-danger {
+        background: var(--danger-color);
+        animation: pulse 1s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+    }
+    
+    .violation-alert {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 9999;
+        background: var(--danger-color);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        text-align: center;
+        min-width: 400px;
+    }
+    
+    .webcam-preview {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 200px;
+        height: 150px;
+        border: 2px solid var(--primary-color);
+        border-radius: 8px;
+        z-index: 1001;
+    }
+    
+    .anti-cheat-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.9);
+        z-index: 9998;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        text-align: center;
+    }
+    
+    .coding-editor {
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        background: #1e1e1e;
+        color: #d4d4d4;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        min-height: 300px;
+    }
+    
+    .word-counter {
+        text-align: right;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+    
+    .word-limit-warning {
+        color: var(--warning-color);
+    }
+    
+    .word-limit-exceeded {
+        color: var(--danger-color);
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="assessment-fullscreen" id="assessmentContainer">
-    <div class="assessment-content">
-        <!-- Assessment Header -->
-        <div class="assessment-header">
-            <div class="container-fluid">
-                <div class="row align-items-center">
-                    <div class="col-md-4">
-                        <div class="assessment-info">
-                            <h6 class="text-white mb-0">{{ test_result.assessment.title }}</h6>
-                            <small class="text-light-75">{{ test_result.application.job.title }}</small>
-                        </div>
-                    </div>
-                    <div class="col-md-4 text-center">
-                        <div class="progress-indicator">
-                            <span class="text-light-75">Question </span>
-                            <span class="text-white fw-bold" id="currentQuestion">1</span>
-                            <span class="text-light-75"> of </span>
-                            <span class="text-white fw-bold" id="totalQuestions">{{ test_result.assessment.get_questions_list()|length }}</span>
-                        </div>
-                    </div>
-                    <div class="col-md-4 text-end">
-                        <div class="timer-container">
-                            <i class="fas fa-clock me-2"></i>
-                            <span class="timer-display" id="timerDisplay">{{ test_result.assessment.time_limit }}:00</span>
+<div class="assessment-container">
+    <!-- Progress Header -->
+    <div class="progress-header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <span class="text-white me-3">Question <span id="current-question">1</span> of {{ questions|length }}</span>
+                        <div class="progress flex-grow-1" style="height: 8px;">
+                            <div class="progress-bar" id="progress-bar" style="width: {{ (1 / questions|length) * 100 }}%"></div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Assessment Body -->
-        <div class="assessment-body">
-            <div class="question-container">
-                <form id="assessmentForm" method="POST" action="{{ url_for('main.submit_assessment', test_result_id=test_result.id) }}">
-                    <!-- Questions will be loaded here -->
-                    <div id="questionsContainer">
-                        {% for question in test_result.assessment.get_questions_list() %}
-                        <div class="question-card" data-question-id="{{ question.id }}" style="display: {% if loop.first %}block{% else %}none{% endif %};">
-                            <!-- Question Rules -->
-                            <div class="question-rules">
-                                <small class="text-warning">
-                                    <i class="fas fa-shield-alt me-1"></i>
-                                    <strong>Active Rules:</strong>
-                                    {% if not question.rules.copy_paste_allowed %}Copy/Paste Disabled{% endif %}
-                                    {% if not question.rules.tab_switching_allowed %} • Tab Switching Disabled{% endif %}
-                                    {% if question.rules.webcam_required %} • Webcam Required{% endif %}
-                                    {% if question.rules.fullscreen_required %} • Full-screen Required{% endif %}
-                                </small>
-                            </div>
-
-                            <div class="card-header">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0">Question {{ loop.index }}</h5>
-                                    <div class="question-timer">
-                                        <i class="fas fa-hourglass-half me-1"></i>
-                                        <span id="questionTimer_{{ question.id }}">{{ question.time_limit }}:00</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="card-body">
-                                <div class="question-content mb-4">
-                                    <h6 class="question-text">{{ question.question }}</h6>
-                                </div>
-
-                                {% if question.type == 'multiple_choice' %}
-                                <div class="question-options">
-                                    {% for option in question.options %}
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input" type="radio" 
-                                               name="question_{{ question.id }}" 
-                                               id="q{{ question.id }}_{{ loop.index0 }}" 
-                                               value="{{ loop.index0 }}">
-                                        <label class="form-check-label" for="q{{ question.id }}_{{ loop.index0 }}">
-                                            {{ option }}
-                                        </label>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-
-                                {% elif question.type == 'text' %}
-                                <div class="question-text-input">
-                                    <textarea class="form-control" 
-                                              name="question_{{ question.id }}" 
-                                              rows="6" 
-                                              placeholder="Type your answer here..."
-                                              {% if not question.rules.copy_paste_allowed %}
-                                              onpaste="return false" 
-                                              oncontextmenu="return false"
-                                              {% endif %}></textarea>
-                                </div>
-
-                                {% elif question.type == 'code' %}
-                                <div class="question-code-input">
-                                    <label class="form-label">Write your code solution:</label>
-                                    <textarea class="form-control code-editor" 
-                                              name="question_{{ question.id }}" 
-                                              rows="12" 
-                                              placeholder="// Write your code here..."
-                                              spellcheck="false"
-                                              {% if not question.rules.copy_paste_allowed %}
-                                              onpaste="return false" 
-                                              oncontextmenu="return false"
-                                              {% endif %}></textarea>
-                                </div>
-                                {% endif %}
-                            </div>
+                <div class="col-md-6 text-center">
+                    <h5 class="text-white mb-0">{{ application.job.title }} Assessment</h5>
+                </div>
+                <div class="col-md-3 text-end">
+                    <div class="d-flex justify-content-end gap-3">
+                        <div class="timer-display" id="question-timer">
+                            <i class="fas fa-clock me-1"></i>
+                            <span id="question-time">{{ questions[0].time_limit * 60 if questions else 300 }}</span>
                         </div>
-                        {% endfor %}
-                    </div>
-
-                    <!-- Projects Section -->
-                    {% if test_result.assessment.get_projects_list() %}
-                    {% for project in test_result.assessment.get_projects_list() %}
-                    {% if project.type == 'short' %}
-                    <div class="question-card" data-question-id="project_{{ loop.index }}" style="display: none;">
-                        <div class="card-header">
-                            <h5 class="mb-0">{{ project.title }}</h5>
-                            <div class="project-timer">
-                                <i class="fas fa-hourglass-half me-1"></i>
-                                <span id="projectTimer_{{ loop.index }}">{{ project.time_limit }}:00</span>
-                            </div>
-                        </div>
-                        
-                        <div class="card-body">
-                            <div class="project-description mb-4">
-                                <h6>Project Description:</h6>
-                                <p class="text-light-75">{{ project.description }}</p>
-                                
-                                {% if project.requirements %}
-                                <h6 class="mt-3">Requirements:</h6>
-                                <p class="text-light-75">{{ project.requirements }}</p>
-                                {% endif %}
-                                
-                                {% if project.deliverables %}
-                                <h6 class="mt-3">Deliverables:</h6>
-                                <p class="text-light-75">{{ project.deliverables }}</p>
-                                {% endif %}
-                            </div>
-
-                            <div class="project-workspace">
-                                <label class="form-label">Project Solution:</label>
-                                <textarea class="form-control code-editor" 
-                                          name="project_{{ loop.index }}" 
-                                          rows="15" 
-                                          placeholder="Develop your solution here..."
-                                          spellcheck="false"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-                    {% endfor %}
-                    {% endif %}
-                </form>
-            </div>
-        </div>
-
-        <!-- Assessment Footer -->
-        <div class="assessment-footer">
-            <div class="container-fluid">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <div class="violation-count">
-                            <small class="text-light-75">
-                                Violations: <span class="text-warning fw-bold" id="violationCount">0</span>
-                            </small>
-                        </div>
-                    </div>
-                    <div class="col-md-6 text-end">
-                        <div class="navigation-buttons">
-                            <button type="button" class="btn btn-outline-light me-2" id="prevBtn" onclick="previousQuestion()" disabled>
-                                <i class="fas fa-chevron-left me-1"></i>Previous
-                            </button>
-                            <button type="button" class="btn btn-primary me-2" id="nextBtn" onclick="nextQuestion()">
-                                Next<i class="fas fa-chevron-right ms-1"></i>
-                            </button>
-                            <button type="button" class="btn btn-success" id="submitBtn" onclick="submitAssessment()" style="display: none;">
-                                <i class="fas fa-check me-1"></i>Submit Assessment
-                            </button>
+                        <div class="timer-display" id="total-timer">
+                            <i class="fas fa-hourglass-half me-1"></i>
+                            <span id="total-time">{{ assessment.time_limit * 60 }}</span>
                         </div>
                     </div>
                 </div>
@@ -309,342 +160,636 @@
         </div>
     </div>
 
-    <!-- Webcam Feed -->
-    <video id="webcamFeed" class="webcam-feed" autoplay muted></video>
+    <!-- Assessment Form -->
+    <div class="container-fluid py-4">
+        <form id="assessment-form" method="POST" action="{{ url_for('main.submit_assessment', test_result_id=test_result.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="time_taken" id="time-taken" value="0">
+            <input type="hidden" name="violations" id="violations-data" value="[]">
+            <input type="hidden" name="browser_fingerprint" id="browser-fingerprint" value="">
+            
+            {% for question in questions %}
+            <div class="question-container" id="question-{{ loop.index0 }}" data-question-id="{{ loop.index0 }}" 
+                 data-time-limit="{{ question.time_limit * 60 }}" 
+                 data-rules="{{ question.rules | tojson if question.rules else '{}' }}"
+                 {% if loop.index0 == 0 %}class="question-container active"{% endif %}>
+                
+                <div class="row justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="card-title mb-0">Question {{ loop.index }}</h5>
+                                    <div class="question-meta">
+                                        <span class="badge bg-primary me-2">{{ question.type|title }}</span>
+                                        {% if question.difficulty %}
+                                        <span class="badge bg-info">{{ question.difficulty|title }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <!-- Question Text -->
+                                <div class="question-text mb-4">
+                                    <h6 class="text-white">{{ question.question }}</h6>
+                                    {% if question.description %}
+                                    <p class="text-secondary">{{ question.description }}</p>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Anti-Cheat Rules Display -->
+                                {% set q_rules = question.rules or {} %}
+                                {% if not q_rules.get('allow_copy_paste', false) or not q_rules.get('allow_right_click', false) %}
+                                <div class="alert alert-warning mb-4">
+                                    <small><i class="fas fa-shield-alt me-1"></i>
+                                    Active restrictions: 
+                                    {% if not q_rules.get('allow_copy_paste', false) %}Copy/Paste disabled{% endif %}
+                                    {% if not q_rules.get('allow_right_click', false) %}, Right-click disabled{% endif %}
+                                    {% if not q_rules.get('allow_ai_tools', false) %}, AI tools prohibited{% endif %}
+                                    </small>
+                                </div>
+                                {% endif %}
+
+                                <!-- Answer Input -->
+                                <div class="answer-section">
+                                    {% if question.type == 'multiple_choice' %}
+                                    <!-- Multiple Choice -->
+                                    <div class="mc-options">
+                                        {% for option in question.options %}
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="radio" 
+                                                   name="answer_{{ loop.parent.index0 }}" 
+                                                   id="q{{ loop.parent.index0 }}_option{{ loop.index0 }}" 
+                                                   value="{{ option }}" required>
+                                            <label class="form-check-label" for="q{{ loop.parent.index0 }}_option{{ loop.index0 }}">
+                                                {{ option }}
+                                            </label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+
+                                    {% elif question.type == 'coding' %}
+                                    <!-- Coding Question -->
+                                    <div class="coding-section">
+                                        {% if question.starter_code %}
+                                        <div class="mb-3">
+                                            <label class="form-label">Starter Code:</label>
+                                            <pre class="bg-dark text-light p-3 rounded"><code>{{ question.starter_code }}</code></pre>
+                                        </div>
+                                        {% endif %}
+                                        <label class="form-label">Your Solution:</label>
+                                        <textarea name="answer_{{ loop.index0 }}" 
+                                                  class="form-control coding-editor" 
+                                                  rows="15" 
+                                                  placeholder="Write your code here..."
+                                                  data-question-id="{{ loop.index0 }}"
+                                                  required></textarea>
+                                        {% if question.language %}
+                                        <small class="text-muted">Language: {{ question.language }}</small>
+                                        {% endif %}
+                                    </div>
+
+                                    {% else %}
+                                    <!-- Text Answer -->
+                                    <div class="text-section">
+                                        <label class="form-label">Your Answer:</label>
+                                        <textarea name="answer_{{ loop.index0 }}" 
+                                                  class="form-control" 
+                                                  rows="{{ '12' if question.type == 'case_study' else '8' }}" 
+                                                  placeholder="Type your answer here..."
+                                                  data-question-id="{{ loop.index0 }}"
+                                                  {% if question.word_limit %}data-word-limit="{{ question.word_limit }}"{% endif %}
+                                                  required></textarea>
+                                        {% if question.word_limit %}
+                                        <div class="word-counter" id="word-count-{{ loop.index0 }}">
+                                            <span class="current-words">0</span> / {{ question.word_limit }} words
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Navigation -->
+                                <div class="d-flex justify-content-between mt-4">
+                                    {% if loop.index0 > 0 %}
+                                    <button type="button" class="btn btn-outline-secondary" onclick="previousQuestion()">
+                                        <i class="fas fa-arrow-left me-1"></i>Previous
+                                    </button>
+                                    {% else %}
+                                    <div></div>
+                                    {% endif %}
+                                    
+                                    {% if loop.index0 < questions|length - 1 %}
+                                    <button type="button" class="btn btn-primary" onclick="nextQuestion()">
+                                        Next<i class="fas fa-arrow-right ms-1"></i>
+                                    </button>
+                                    {% else %}
+                                    <button type="button" class="btn btn-success btn-lg" onclick="finishAssessment()">
+                                        <i class="fas fa-check me-1"></i>Submit Assessment
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </form>
+    </div>
+
+    <!-- Webcam Preview -->
+    {% if assessment.get_anti_cheat_rules().get('webcam_required') %}
+    <video id="webcam-preview" class="webcam-preview" autoplay muted></video>
+    {% endif %}
+
+    <!-- Anti-Cheat Overlay -->
+    <div class="anti-cheat-overlay" id="anti-cheat-overlay">
+        <div>
+            <h3>Assessment Paused</h3>
+            <p>Please return to the assessment window</p>
+            <button class="btn btn-primary" onclick="resumeAssessment()">Resume</button>
+        </div>
+    </div>
 
     <!-- Violation Alert -->
-    <div id="violationAlert" class="violation-alert" style="display: none;">
-        <h5><i class="fas fa-exclamation-triangle me-2"></i>Warning!</h5>
-        <p id="violationMessage"></p>
+    <div class="violation-alert" id="violation-alert" style="display: none;">
+        <h4 class="mb-3">⚠️ Warning</h4>
+        <p id="violation-message"></p>
+        <p><strong>Violations: <span id="violation-count">0</span>/3</strong></p>
         <button class="btn btn-light" onclick="acknowledgeViolation()">I Understand</button>
     </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/anti-cheat.js') }}"></script>
-<script src="{{ url_for('static', filename='js/assessment.js') }}"></script>
 <script>
-// Assessment variables
-let currentQuestionIndex = 0;
-let totalQuestions = {{ test_result.assessment.get_questions_list()|length }};
-let totalTime = {{ test_result.assessment.time_limit }} * 60; // Convert to seconds
-let timeRemaining = totalTime;
-let violationCount = 0;
+// Assessment state
+let currentQuestion = 0;
+let totalQuestions = {{ questions|length }};
+let questionStartTime = Date.now();
 let assessmentStartTime = Date.now();
+let violations = [];
+let questionTimers = {};
+let totalTimer;
+let isSubmitted = false;
 
-// Question data
-const questions = {{ test_result.assessment.get_questions_list()|tojson }};
-const testResultId = {{ test_result.id }};
+// Anti-cheat monitoring
+let tabSwitchCount = 0;
+let copyPasteCount = 0;
+let rightClickCount = 0;
+let webcamStream = null;
+let focusLostCount = 0;
 
 // Initialize assessment
 document.addEventListener('DOMContentLoaded', function() {
     initializeAssessment();
+    setupAntiCheatMonitoring();
+    startTimers();
+    generateBrowserFingerprint();
 });
 
 function initializeAssessment() {
-    // Enter full-screen mode
-    enterFullscreen();
+    // Force fullscreen
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    }
     
-    // Initialize webcam
+    // Initialize webcam if required
+    {% if assessment.get_anti_cheat_rules().get('webcam_required') %}
     initializeWebcam();
+    {% endif %}
     
-    // Start timer
-    startTimer();
+    // Setup auto-save
+    setInterval(autoSave, 30000); // Auto-save every 30 seconds
     
-    // Initialize anti-cheat monitoring
-    initializeAntiCheat(testResultId);
-    
-    // Update UI
-    updateQuestionDisplay();
-    
-    // Prevent context menu and keyboard shortcuts
-    document.addEventListener('contextmenu', e => e.preventDefault());
-    document.addEventListener('keydown', handleKeyDown);
-    
-    // Monitor window focus
-    window.addEventListener('blur', handleWindowBlur);
-    window.addEventListener('focus', handleWindowFocus);
-    
-    // Auto-save answers periodically
-    setInterval(autoSaveAnswers, 30000); // Every 30 seconds
+    // Setup word counters
+    setupWordCounters();
 }
 
-function enterFullscreen() {
-    const element = document.getElementById('assessmentContainer');
-    
-    if (element.requestFullscreen) {
-        element.requestFullscreen();
-    } else if (element.webkitRequestFullscreen) {
-        element.webkitRequestFullscreen();
-    } else if (element.mozRequestFullScreen) {
-        element.mozRequestFullScreen();
-    } else if (element.msRequestFullscreen) {
-        element.msRequestFullscreen();
-    }
-    
-    // Monitor fullscreen changes
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-}
-
-function handleFullscreenChange() {
-    if (!document.fullscreenElement && !document.webkitFullscreenElement && 
-        !document.mozFullScreenElement && !document.msFullscreenElement) {
-        logViolation('fullscreen_exit', 'Exited full-screen mode');
-    }
-}
-
-async function initializeWebcam() {
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { width: 200, height: 150 }, 
-            audio: false 
-        });
-        
-        const video = document.getElementById('webcamFeed');
-        video.srcObject = stream;
-        
-        // Start face detection
-        startFaceDetection(video);
-        
-    } catch (error) {
-        console.error('Webcam initialization failed:', error);
-        logViolation('webcam_disconnect', 'Failed to initialize webcam');
-    }
-}
-
-function startTimer() {
-    const timerInterval = setInterval(() => {
-        timeRemaining--;
-        updateTimerDisplay();
-        
-        if (timeRemaining <= 0) {
-            clearInterval(timerInterval);
-            autoSubmitAssessment();
+function setupAntiCheatMonitoring() {
+    // Tab switching detection
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            handleTabSwitch();
         }
-    }, 1000);
-}
-
-function updateTimerDisplay() {
-    const minutes = Math.floor(timeRemaining / 60);
-    const seconds = timeRemaining % 60;
-    const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    
-    const timerElement = document.getElementById('timerDisplay');
-    timerElement.textContent = display;
-    
-    // Change color based on time remaining
-    if (timeRemaining <= 300) { // 5 minutes
-        timerElement.className = 'timer-display timer-danger';
-    } else if (timeRemaining <= 900) { // 15 minutes
-        timerElement.className = 'timer-display timer-warning';
-    } else {
-        timerElement.className = 'timer-display';
-    }
-}
-
-function updateQuestionDisplay() {
-    // Hide all questions
-    document.querySelectorAll('.question-card').forEach(card => {
-        card.style.display = 'none';
     });
     
-    // Show current question
-    const questions = document.querySelectorAll('.question-card');
-    if (questions[currentQuestionIndex]) {
-        questions[currentQuestionIndex].style.display = 'block';
-    }
+    // Window focus detection
+    window.addEventListener('blur', function() {
+        handleFocusLoss();
+    });
     
-    // Update progress
-    document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
+    // Disable right-click based on question rules
+    document.addEventListener('contextmenu', function(e) {
+        const currentQuestionData = getCurrentQuestionRules();
+        if (!currentQuestionData.allow_right_click) {
+            e.preventDefault();
+            logViolation('right_click', 'Right-click attempted');
+            rightClickCount++;
+        }
+    });
     
-    // Update navigation buttons
-    document.getElementById('prevBtn').disabled = currentQuestionIndex === 0;
+    // Disable copy/paste based on question rules
+    document.addEventListener('keydown', function(e) {
+        const currentQuestionData = getCurrentQuestionRules();
+        
+        // Disable F12, Ctrl+Shift+I, etc.
+        if (e.key === 'F12' || 
+            (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+            (e.ctrlKey && e.shiftKey && e.key === 'J') ||
+            (e.ctrlKey && e.key === 'U')) {
+            e.preventDefault();
+            logViolation('dev_tools', 'Developer tools access attempted');
+            return false;
+        }
+        
+        // Disable copy/paste if not allowed
+        if (!currentQuestionData.allow_copy_paste) {
+            if ((e.ctrlKey && (e.key === 'c' || e.key === 'v' || e.key === 'x')) ||
+                (e.ctrlKey && e.key === 'a')) {
+                e.preventDefault();
+                logViolation('copy_paste', 'Copy/paste attempted');
+                copyPasteCount++;
+                return false;
+            }
+        }
+        
+        // Disable other shortcuts
+        if (e.ctrlKey && (e.key === 's' || e.key === 'p')) {
+            e.preventDefault();
+            return false;
+        }
+    });
     
-    if (currentQuestionIndex === questions.length - 1) {
-        document.getElementById('nextBtn').style.display = 'none';
-        document.getElementById('submitBtn').style.display = 'inline-block';
-    } else {
-        document.getElementById('nextBtn').style.display = 'inline-block';
-        document.getElementById('submitBtn').style.display = 'none';
+    // Disable text selection where not allowed
+    const currentQuestionData = getCurrentQuestionRules();
+    if (!currentQuestionData.allow_copy_paste) {
+        document.body.style.userSelect = 'none';
     }
 }
 
-function nextQuestion() {
-    if (currentQuestionIndex < totalQuestions - 1) {
-        currentQuestionIndex++;
-        updateQuestionDisplay();
-        autoSaveAnswers();
+function getCurrentQuestionRules() {
+    const questionContainer = document.querySelector('.question-container.active');
+    if (questionContainer) {
+        const rulesData = questionContainer.getAttribute('data-rules');
+        return rulesData ? JSON.parse(rulesData) : {};
     }
+    return {};
 }
 
-function previousQuestion() {
-    if (currentQuestionIndex > 0) {
-        currentQuestionIndex--;
-        updateQuestionDisplay();
-    }
+function initializeWebcam() {
+    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+        .then(stream => {
+            webcamStream = stream;
+            const video = document.getElementById('webcam-preview');
+            video.srcObject = stream;
+            
+            // Start monitoring for multiple faces/people
+            startFaceDetection();
+        })
+        .catch(err => {
+            logViolation('webcam_error', 'Webcam access denied or unavailable');
+        });
 }
 
-function handleKeyDown(e) {
-    // Prevent F12, Ctrl+Shift+I, Ctrl+U, etc.
-    if (e.key === 'F12' || 
-        (e.ctrlKey && e.shiftKey && e.key === 'I') ||
-        (e.ctrlKey && e.key === 'u') ||
-        (e.ctrlKey && e.key === 's') ||
-        (e.altKey && e.key === 'Tab')) {
-        e.preventDefault();
-        logViolation('inspect', 'Attempted to open developer tools');
-        return false;
-    }
+function startFaceDetection() {
+    // Simplified face detection - in production would use ML libraries
+    const video = document.getElementById('webcam-preview');
+    setInterval(() => {
+        // Capture frame and analyze (simplified)
+        captureWebcamFrame();
+    }, 5000);
+}
+
+function captureWebcamFrame() {
+    // Capture and store webcam frames for integrity analysis
+    const video = document.getElementById('webcam-preview');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
     
-    // Prevent Alt+Tab
-    if (e.altKey && e.key === 'Tab') {
-        e.preventDefault();
-        logViolation('tab_switch', 'Attempted to switch applications');
-        return false;
+    // Store frame data (in production, would send to server)
+    const frameData = canvas.toDataURL('image/jpeg', 0.3);
+    
+    // Simple analysis - check if face is present
+    if (frameData.length < 10000) { // Very basic check
+        logViolation('no_face', 'No face detected in webcam');
     }
 }
 
-function handleWindowBlur() {
-    logViolation('focus_loss', 'Window lost focus');
+function handleTabSwitch() {
+    tabSwitchCount++;
+    const currentQuestionData = getCurrentQuestionRules();
+    
+    if (!currentQuestionData.allow_tab_switching) {
+        logViolation('tab_switch', 'Tab switching detected');
+        showViolationAlert('Tab switching is not allowed during this question!');
+        
+        // Show overlay
+        document.getElementById('anti-cheat-overlay').style.display = 'flex';
+    }
 }
 
-function handleWindowFocus() {
-    // Window regained focus
-    console.log('Window regained focus');
+function handleFocusLoss() {
+    focusLostCount++;
+    if (focusLostCount > 3) {
+        logViolation('focus_loss', 'Excessive focus loss detected');
+    }
 }
 
 function logViolation(type, description) {
-    violationCount++;
-    document.getElementById('violationCount').textContent = violationCount;
+    const violation = {
+        type: type,
+        description: description,
+        timestamp: Date.now(),
+        question: currentQuestion + 1,
+        severity: getViolationSeverity(type)
+    };
     
-    // Send violation to server
-    fetch('/api/anti-cheat/log', {
+    violations.push(violation);
+    
+    // Send to server immediately
+    fetch('/api/log-violation', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
-            test_result_id: testResultId,
+            test_result_id: {{ test_result.id }},
             violation_type: type,
-            description: description
+            description: description,
+            timestamp: violation.timestamp
         })
     });
     
-    // Show violation alert
-    showViolationAlert(description);
+    // Check violation threshold
+    checkViolationThreshold();
+}
+
+function getViolationSeverity(type) {
+    const severityMap = {
+        'tab_switch': 'medium',
+        'copy_paste': 'medium',
+        'right_click': 'low',
+        'dev_tools': 'high',
+        'webcam_error': 'high',
+        'no_face': 'medium',
+        'focus_loss': 'low'
+    };
+    return severityMap[type] || 'medium';
+}
+
+function checkViolationThreshold() {
+    const highSeverityViolations = violations.filter(v => v.severity === 'high').length;
+    const totalViolations = violations.length;
     
-    // Check if maximum violations reached
-    if (violationCount >= 3) {
-        showViolationAlert('Maximum violations reached. Assessment will be terminated.');
-        setTimeout(() => {
-            autoSubmitAssessment();
-        }, 5000);
+    if (highSeverityViolations >= 2 || totalViolations >= 5) {
+        terminateAssessment('Multiple violations detected');
+    } else if (totalViolations >= 3) {
+        showViolationAlert('Final warning: One more violation will terminate the assessment!');
+    } else if (totalViolations >= 1) {
+        showViolationAlert('Violation detected. Please follow the assessment rules.');
     }
 }
 
 function showViolationAlert(message) {
-    document.getElementById('violationMessage').textContent = message;
-    document.getElementById('violationAlert').style.display = 'block';
+    document.getElementById('violation-message').textContent = message;
+    document.getElementById('violation-count').textContent = violations.length;
+    document.getElementById('violation-alert').style.display = 'block';
 }
 
 function acknowledgeViolation() {
-    document.getElementById('violationAlert').style.display = 'none';
+    document.getElementById('violation-alert').style.display = 'none';
 }
 
-function autoSaveAnswers() {
-    const formData = new FormData(document.getElementById('assessmentForm'));
-    formData.append('auto_save', 'true');
+function resumeAssessment() {
+    document.getElementById('anti-cheat-overlay').style.display = 'none';
+    // Return focus to assessment
+    document.documentElement.requestFullscreen();
+}
+
+function terminateAssessment(reason) {
+    alert('Assessment terminated: ' + reason);
     
-    fetch('/api/assessment/auto-save', {
+    // Submit with violation flag
+    document.getElementById('violations-data').value = JSON.stringify(violations);
+    document.getElementById('assessment-form').submit();
+}
+
+function startTimers() {
+    // Question timer
+    startQuestionTimer();
+    
+    // Total assessment timer
+    const totalTimeLimit = {{ assessment.time_limit * 60 }};
+    let totalTimeRemaining = totalTimeLimit;
+    
+    totalTimer = setInterval(() => {
+        totalTimeRemaining--;
+        updateTimerDisplay('total-time', totalTimeRemaining);
+        
+        if (totalTimeRemaining <= 0) {
+            autoSubmit('Time limit exceeded');
+        }
+    }, 1000);
+}
+
+function startQuestionTimer() {
+    const questionContainer = document.querySelector('.question-container.active');
+    const timeLimit = parseInt(questionContainer.getAttribute('data-time-limit'));
+    let timeRemaining = timeLimit;
+    
+    if (questionTimers[currentQuestion]) {
+        clearInterval(questionTimers[currentQuestion]);
+    }
+    
+    questionTimers[currentQuestion] = setInterval(() => {
+        timeRemaining--;
+        updateTimerDisplay('question-time', timeRemaining);
+        
+        if (timeRemaining <= 0) {
+            nextQuestion(); // Auto-advance on timeout
+        }
+    }, 1000);
+}
+
+function updateTimerDisplay(elementId, timeRemaining) {
+    const element = document.getElementById(elementId);
+    const minutes = Math.floor(timeRemaining / 60);
+    const seconds = timeRemaining % 60;
+    element.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    
+    // Update timer appearance based on time remaining
+    const timerElement = element.parentElement;
+    if (timeRemaining <= 60) {
+        timerElement.className = 'timer-display timer-danger';
+    } else if (timeRemaining <= 300) {
+        timerElement.className = 'timer-display timer-warning';
+    }
+}
+
+function nextQuestion() {
+    if (currentQuestion < totalQuestions - 1) {
+        // Save current answer
+        saveCurrentAnswer();
+        
+        // Hide current question
+        document.querySelector('.question-container.active').classList.remove('active');
+        
+        // Show next question
+        currentQuestion++;
+        document.getElementById(`question-${currentQuestion}`).classList.add('active');
+        
+        // Update progress
+        updateProgress();
+        
+        // Start new question timer
+        startQuestionTimer();
+        
+        // Update anti-cheat rules for new question
+        updateAntiCheatRules();
+    }
+}
+
+function previousQuestion() {
+    if (currentQuestion > 0) {
+        // Save current answer
+        saveCurrentAnswer();
+        
+        // Hide current question
+        document.querySelector('.question-container.active').classList.remove('active');
+        
+        // Show previous question
+        currentQuestion--;
+        document.getElementById(`question-${currentQuestion}`).classList.add('active');
+        
+        // Update progress
+        updateProgress();
+        
+        // Start question timer
+        startQuestionTimer();
+        
+        // Update anti-cheat rules
+        updateAntiCheatRules();
+    }
+}
+
+function updateProgress() {
+    document.getElementById('current-question').textContent = currentQuestion + 1;
+    const progressPercent = ((currentQuestion + 1) / totalQuestions) * 100;
+    document.getElementById('progress-bar').style.width = progressPercent + '%';
+}
+
+function updateAntiCheatRules() {
+    const currentQuestionData = getCurrentQuestionRules();
+    
+    // Update copy/paste prevention
+    if (!currentQuestionData.allow_copy_paste) {
+        document.body.style.userSelect = 'none';
+    } else {
+        document.body.style.userSelect = 'auto';
+    }
+}
+
+function saveCurrentAnswer() {
+    // Auto-save functionality
+    const formData = new FormData(document.getElementById('assessment-form'));
+    fetch('/api/auto-save-assessment', {
         method: 'POST',
         body: formData
-    }).catch(error => {
-        console.error('Auto-save failed:', error);
     });
 }
 
-function submitAssessment() {
-    if (confirm('Are you sure you want to submit your assessment? This action cannot be undone.')) {
-        document.getElementById('assessmentForm').submit();
+function autoSave() {
+    if (!isSubmitted) {
+        saveCurrentAnswer();
     }
 }
 
-function autoSubmitAssessment() {
-    alert('Time is up! Your assessment will be submitted automatically.');
-    document.getElementById('assessmentForm').submit();
-}
-
-// Face detection (simplified implementation)
-function startFaceDetection(video) {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = 200;
-    canvas.height = 150;
-    
-    let lastFaceDetection = Date.now();
-    let consecutiveNoFace = 0;
-    
-    function detectFace() {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+function setupWordCounters() {
+    document.querySelectorAll('textarea[data-word-limit]').forEach(textarea => {
+        const questionId = textarea.getAttribute('data-question-id');
+        const wordLimit = parseInt(textarea.getAttribute('data-word-limit'));
+        const counter = document.getElementById(`word-count-${questionId}`);
         
-        // Simplified face detection - in production, use a proper face detection library
-        const hasMotion = detectMotion(imageData);
-        
-        if (hasMotion) {
-            lastFaceDetection = Date.now();
-            consecutiveNoFace = 0;
-        } else {
-            consecutiveNoFace++;
+        textarea.addEventListener('input', function() {
+            const words = this.value.trim().split(/\s+/).length;
+            const currentSpan = counter.querySelector('.current-words');
+            currentSpan.textContent = words;
             
-            if (consecutiveNoFace > 30) { // 30 frames without motion
-                logViolation('no_face', 'No face detected for extended period');
-                consecutiveNoFace = 0;
+            if (words > wordLimit) {
+                counter.className = 'word-counter word-limit-exceeded';
+            } else if (words > wordLimit * 0.9) {
+                counter.className = 'word-counter word-limit-warning';
+            } else {
+                counter.className = 'word-counter';
             }
-        }
-        
-        setTimeout(detectFace, 1000); // Check every second
-    }
-    
-    video.addEventListener('loadedmetadata', detectFace);
-}
-
-function detectMotion(imageData) {
-    // Simplified motion detection
-    // In production, implement proper face detection using libraries like face-api.js
-    const data = imageData.data;
-    let motion = 0;
-    
-    for (let i = 0; i < data.length; i += 4) {
-        const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
-        if (brightness > 50) motion++;
-    }
-    
-    return motion > 1000; // Threshold for detecting presence
-}
-
-// Heartbeat to server
-setInterval(() => {
-    fetch('/api/test/heartbeat', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            test_result_id: testResultId,
-            current_question: currentQuestionIndex,
-            time_remaining: timeRemaining
-        })
+        });
     });
-}, 10000); // Every 10 seconds
+}
 
-// Prevent page unload
+function generateBrowserFingerprint() {
+    const fingerprint = {
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        platform: navigator.platform,
+        screenResolution: `${screen.width}x${screen.height}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timestamp: Date.now()
+    };
+    
+    document.getElementById('browser-fingerprint').value = JSON.stringify(fingerprint);
+}
+
+function finishAssessment() {
+    if (confirm('Are you sure you want to submit your assessment? You cannot change your answers after submission.')) {
+        isSubmitted = true;
+        
+        // Calculate total time taken
+        const timeTaken = Math.floor((Date.now() - assessmentStartTime) / 1000 / 60);
+        document.getElementById('time-taken').value = timeTaken;
+        
+        // Include violations data
+        document.getElementById('violations-data').value = JSON.stringify(violations);
+        
+        // Submit form
+        document.getElementById('assessment-form').submit();
+    }
+}
+
+function autoSubmit(reason) {
+    logViolation('auto_submit', reason);
+    isSubmitted = true;
+    
+    const timeTaken = Math.floor((Date.now() - assessmentStartTime) / 1000 / 60);
+    document.getElementById('time-taken').value = timeTaken;
+    document.getElementById('violations-data').value = JSON.stringify(violations);
+    
+    document.getElementById('assessment-form').submit();
+}
+
+// Prevent leaving the page
 window.addEventListener('beforeunload', function(e) {
-    e.preventDefault();
-    e.returnValue = '';
+    if (!isSubmitted) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+    }
+});
+
+// Disable right-click by default
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+// Monitor fullscreen exit
+document.addEventListener('fullscreenchange', function() {
+    if (!document.fullscreenElement && !isSubmitted) {
+        logViolation('fullscreen_exit', 'Exited fullscreen mode');
+        // Try to re-enter fullscreen
+        setTimeout(() => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            }
+        }, 1000);
+    }
 });
 </script>
 {% endblock %}

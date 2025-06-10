@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Take Assessment - Hirica{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('jobseeker_dashboard') }}" class="text-decoration-none">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Take Assessment</li>
+                </ol>
+            </nav>
+            <h1 class="display-6 fw-bold text-dark mb-2">Take Assessment</h1>
+            <p class="text-muted">Complete the assessment for {{ application.job.title }}</p>
+        </div>
+    </div>
+
+    {% if assessment and assessment.content %}
+        {% set assessment_content = assessment.content | from_json %}
+
+        {# Display Assessment Overview #}
+        <div class="card mb-4">
+            <div class="card-header fw-bold">Assessment Overview</div>
+            <div class="card-body">
+                <p><strong>Title:</strong> {{ assessment.title }}</p>
+                <p><strong>Description:</strong> {{ assessment.description }}</p>
+                {# TODO: Display overall anti-cheating rules and total time #}
+                 <p><strong>Total Estimated Time:</strong> {{ assessment.time_limit }} minutes (Note: This is an estimate based on task limits.)</p>
+
+                <h6>Overall Anti-Cheating Rules:</h6>
+                 {# Display overall anti-cheat rules if available, otherwise indicate default #}
+                {% if assessment.get_anti_cheat_rules() %}
+                    <ul>
+                        {% for rule, value in assessment.get_anti_cheat_rules().items() %}
+                            <li><strong>{{ rule|replace('_', ' ')|title }}:</strong> {{ 'Enabled' if value else 'Disabled' }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                     <p>Default anti-cheating rules are applied.</p>
+                {% endif %}
+
+            </div>
+        </div>
+
+        {# Display Assessment Levels and Tasks #}
+        <form id="assessment-form" method="POST" action="{{ url_for('submit_assessment', app_id=application.id) }}">
+            <input type="hidden" name="assessment_id" value="{{ assessment.id }}">
+            {# Input to store time taken (will be updated by JavaScript) #}
+            <input type="hidden" name="time_taken" id="time_taken" value="0">
+
+            {# Hidden inputs for anti-cheating data #}
+            <input type="hidden" name="tab_switch_count" id="tab_switch_count" value="0">
+            <input type="hidden" name="copy_paste_count" id="copy_paste_count" value="0">
+            <input type="hidden" name="ip_address" id="ip_address" value="">
+            {# TODO: Add hidden input for browser fingerprint if implemented #}
+
+            {% for level in assessment_content.levels %}
+                <div class="card mb-4">
+                    <div class="card-header fw-bold">{{ level.name }}</div>
+                    <div class="card-body">
+                        <p><strong>Goal:</strong> {{ level.goal }}</p>
+                        <p><strong>Format:</strong> {{ level.format }}</p>
+                         <p><strong>Level Time Limit:</strong> {{ level.total_time_minutes }} minutes</p>
+
+                        <h6>Rules for this level:</h6>
+                        <ul>
+                            {% for rule, value in level.rules.items() %}
+                                <li><strong>{{ rule|replace('_', ' ')|title }}:</strong> {{ 'Allowed' if value else 'Disallowed' }}</li>
+                            {% endfor %}
+                        </ul>
+
+                        <h6>Tasks:</h6>
+                        {% for task in level.tasks %}
+                            <div class="card mb-3 bg-light p-3">
+                                <strong>Task {{ loop.index }}:</strong> {{ task.question|replace('\n', '<br>')|safe }}
+                                {% if task.type == 'mcq' %}
+                                    <div class="mt-3">
+                                        {% for option in task.options %}
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="answer_{{ loop.parent.index0 }}_{{ loop.index0 }}" id="option_{{ loop.parent.index0 }}_{{ loop.index0 }}_{{ loop.index0 }}" value="{{ option }}" required>
+                                                <label class="form-check-label" for="option_{{ loop.parent.index0 }}_{{ loop.index0 }}_{{ loop.index0 }}">
+                                                    {{ option }}
+                                                </label>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% elif task.type == 'short_text' or task.type == 'case_ethics' or task.type == 'descriptive' or task.type == 'design_scenario'%}
+                                     <div class="mt-3">
+                                        <label for="answer_{{ loop.parent.index0 }}_{{ loop.index0 }}" class="form-label">Your Answer ({% if task.word_limit %}Word limit: {{ task.word_limit }}{% endif %}):</label>
+                                        <textarea class="form-control" id="answer_{{ loop.parent.index0 }}_{{ loop.index0 }}" name="answer_{{ loop.parent.index0 }}_{{ loop.index0 }}" rows="{% if task.type == 'short_text' %}3{% else %}6{% endif %}" required></textarea>
+                                    </div>
+                                {% elif task.type == 'coding' or task.type == 'project' %}
+                                     <div class="mt-3">
+                                        <label for="answer_{{ loop.parent.index0 }}_{{ loop.index0 }}" class="form-label">Your Code/Project (provide code or a link/description):</label>
+                                        <textarea class="form-control" id="answer_{{ loop.parent.index0 }}_{{ loop.index0 }}" name="answer_{{ loop.parent.index0 }}_{{ loop.index0 }}" rows="10" required></textarea>
+                                    </div>
+                                {% endif %}
+
+                                <div class="small text-muted mt-2"><strong>Task Time Limit:</strong> {{ task.time_limit_minutes }} minutes</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-primary btn-lg mt-3">Submit Assessment</button>
+        </form>
+
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            No assessment available for this application yet. Please wait for the recruiter to send one.
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Client-side Timer Implementation
+let startTime = Date.now();
+let timerInterval;
+
+function updateTimer() {
+    const elapsed = Date.now() - startTime;
+    // You can display the elapsed time somewhere on the page if you want
+    // For now, we'll just update the hidden input field
+    document.getElementById('time_taken').value = Math.floor(elapsed / 1000); // Time in seconds
+}
+
+// Start the timer when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    timerInterval = setInterval(updateTimer, 1000); // Update every second
+
+    // Get client IP address (using a third-party service - be mindful of privacy and reliability)
+    fetch('https://api.ipify.org?format=json')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('ip_address').value = data.ip;
+        })
+        .catch(error => console.error('Error fetching IP address:', error));
+});
+
+// Stop the timer when the form is submitted
+document.getElementById('assessment-form').addEventListener('submit', function() {
+    clearInterval(timerInterval);
+    updateTimer(); // Final update before submission
+
+    // Ensure anti-cheating counts are updated before submission
+    document.getElementById('tab_switch_count').value = tabSwitchCount;
+    document.getElementById('copy_paste_count').value = copyPasteCount; // Using a new copyPasteCount variable
+});
+
+// Basic Client-side Anti-Cheating Measures (Placeholders)
+
+// Detect Tab Switches (Example)
+let tabSwitchCount = 0;
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        tabSwitchCount++;
+        console.log('Tab switched away. Count:', tabSwitchCount);
+        // The count is updated in the hidden input on form submission
+    } else {
+        console.log('Tab is visible again.');
+    }
+});
+
+// Detect Copy-Paste (Example - basic)
+let copyPasteCount = 0;
+document.addEventListener('copy', function(event) {
+    console.log('Copy event detected.');
+    copyPasteCount++;
+    // The count is updated in the hidden input on form submission
+});
+document.addEventListener('paste', function(event) {
+    console.log('Paste event detected.');
+    copyPasteCount++;
+    // The count is updated in the hidden input on form submission
+});
+
+// TODO: Implement other anti-cheating measures based on rules (e.g., disabling right-click, monitoring focus)
+// TODO: Collect anti-cheating data and include it in the form submission
+
+</script>
+{% endblock %} 

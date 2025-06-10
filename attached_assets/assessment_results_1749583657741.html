@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Assessment Results - {{ application.job.title }} - Hirica{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('jobseeker_dashboard') }}" class="text-decoration-none">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Assessment Results</li>
+                </ol>
+            </nav>
+            <h1 class="display-6 fw-bold text-dark mb-2">Assessment Results</h1>
+            <p class="text-muted">{{ application.job.title }} at {{ application.job.recruiter.company or 'Company' }}</p>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Overall Score Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5 class="fw-bold text-dark mb-3">Overall Performance</h5>
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="display-4 fw-bold text-primary me-3">{{ result.score|round(1) }}%</div>
+                                <div class="text-muted">
+                                    <div>Overall Score</div>
+                                    <small>Based on your answers and performance</small>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="display-4 fw-bold text-success me-3">{{ result.integrity_score|round(1) }}%</div>
+                                <div class="text-muted">
+                                    <div>Integrity Score</div>
+                                    <small>Based on assessment behavior</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="bg-light rounded p-3">
+                                <h6 class="fw-bold mb-3">Assessment Details</h6>
+                                <p class="mb-2"><i class="fas fa-clock me-2"></i>Time Taken: {{ result.time_taken }} minutes</p>
+                                <p class="mb-2"><i class="fas fa-calendar me-2"></i>Completed: {{ result.completed_at.strftime('%B %d, %Y') }}</p>
+                                <p class="mb-0"><i class="fas fa-tasks me-2"></i>Total Questions: {{ assessment.content|from_json|length }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Evaluation Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="fw-bold text-dark mb-0">AI Evaluation Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="ai-evaluation-summary">
+                        {{ (result.ai_evaluation|from_json).summary|default('No summary available.') }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Feedback Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="fw-bold text-dark mb-0">Detailed Feedback</h5>
+                </div>
+                <div class="card-body">
+                    {% set feedback = (result.ai_evaluation|from_json).feedback %}
+                    {% if feedback %}
+                        {% for category, details in feedback.items() %}
+                            <div class="feedback-category mb-4">
+                                <h6 class="fw-bold text-primary">{{ category|replace('_', ' ')|title }}</h6>
+                                <p class="text-muted">{{ details }}</p>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No detailed feedback available.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Integrity Report Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="fw-bold text-dark mb-0">Integrity Report</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <h6 class="fw-bold">Tab Switches</h6>
+                                <p class="text-muted mb-0">{{ result.tab_switches }} detected</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <h6 class="fw-bold">Copy/Paste Attempts</h6>
+                                <p class="text-muted mb-0">{{ result.copy_paste_attempts }} detected</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% if result.suspicious_activity %}
+                        <div class="alert alert-warning mt-3">
+                            <h6 class="alert-heading">Suspicious Activity Detected</h6>
+                            <p class="mb-0">{{ result.suspicious_activity }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-3 justify-content-center">
+                <a href="{{ url_for('jobseeker_dashboard') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+                <a href="{{ url_for('job_detail', job_id=application.job_id) }}" class="btn btn-primary">
+                    <i class="fas fa-briefcase me-2"></i>View Job Details
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,60 @@
+11.MAIN PART:By clicking generate assessment, it will give another interface. In that it will generate the test assessment questions and tasks which required to ask the jobseeker for the specified job. The ai tool which faster and excellence, will generate the tasks and questions for the job by referring the skills, responsibly, requirements and the all things in that job application.The tasks or questions will be required things for the job, about the required skills, not like nowadays, like the questions or tasks from outdated syllabus, or not useful in entire job questions The tasks and questions and also the time and the rule for each questions will be vary and specified to each questions. The tasks and questions can be multiple choice, text, code,role specific tasks,live coding or projects,small project which can be done by hours, big project which can be done by hours to days. There should be unique and changed assessment for one job like if two job seeker apply for the same job they should be get different tasks and questions.
+12.The assessment generated page:now its in recuiter pages only, after clicking generate assessment the page which assessment questions will be generated in that page. For each questions or tasks there will be options
+1.edit/regenerate:if it clicks our ai need to change or modify that questions or tasks which should be better than oldest and required for the job.
+2.delete:Option to delete that question from the assessment.
+3.Time:our ai already fixed the time for each questions by required things, if recuiter need to change then they can use this option.
+4.Rules:By our anti cheating system, our ai will be fixed the rules for each questions. Of recuiter needs to change then they can use this option.
+Rules include:
+Copy/paste allowed or disallowed
+Tab switching allowed or disallowed
+If tab switching allowed using ai tools or other website allowed or disallowed
+Minimizing screen allowed or disallowed
+Webcam allowed or disallowed
+Right click allowed or disallowed
+Inspect, screenshot allowed or disallowed
+Webcam is also optional
+So there would be options for recuiter to select the rules for each questions
+(Ultimate Anti-Cheating Strategy for Online Tests
+1. Disable Copy-Paste, Right-Click, and Inspect
+Prevent candidates from copying questions or pasting answers:
+2. Enable Proctoring (via Webcam + Screenshots)
+ 3. Detect Tab Switching or Focus Loss
+4. IP, Device & Browser Fingerprinting
+ 5. Use AI-Generated, Unique, and Dynamic Questions
+6. Auto-Save with Timers and Submission Lock
+7. Encrypted Tests + Backend Validation
+8. Live/Recorded Proof of Work 
+9.Use the webcam to detect eye movement or face direction:
+If they keep looking left/right (at their phone), trigger a warning.
+Use ML-based gaze detection or image frame comparison.
+Optional: Require face always in frame, log:
+Multiple faces
+No face
+Head turns away repeatedly
+10. Phone Detection Warning via Webcam.
+11.Live-Variant Adaptive Questions
+12.  Full Screen Enforcement + Tab Focus
+13.  Browser Lockdown Tools (Optional for Advanced Use)
+Like this if job seeker do any malpractice first we can give warning, the we can reduce the mark from results or stop test and make as disqualified.
+There should a option to add question, which recuiter can give the questions or tasks by their own. They can choose what type first, multiple choice, text, code. If multiple choice the require should give the options also.
+13.In that page only there would be two more things like Small project and Big project. It can select the whether it need or not,if recuiter needs only. Recuiter can select bith project needed, both not needed, anyone needed needed like that.Our ai tools will be genrate the question for both projects, the things is there would be another option to recuiter to give the topic or questions by their own to the projects.in project also the recuiter have two option to modify the rules and time.Project-Based Task Options (If Recruiter Allow:while approving tasks, ask recruiters: “Do you want to include a project-based task?”
+If yes, show 2 options:
+1. Short-term projects — only about small topic which will be out of one code.to be submitted within the test window ( hours).
+2. Extended projects —it would be submit as zip file after taking and submitting assessment. to be submitted in a few days (hours-days), with recruiter-approved deadline.
+Add backend rules to accept and validate late project submissions based on recruiter configuration.
+Custom vs AI Project Topics
+Ask recruiter: “Do you want to specify the project topic?”
+If yes: allow custom text/topic upload.
+If no: proceed with AI-generated project based on job data (skills, requirements).
+14.After finish there would be option to approve, decline, stop. If decline the test cant be take to job seeker. If stop the recuiter can approve it later like it will be paused until their command. If approve, the respective job seeker can take the assessment which includes the tasks and questions which recuiter approved.if recuiter approved, it notify the respective job seeker
+15.Back to job seeker dashboard:there job seeker can see the approved job test assessment in respective places. He can choose the take assessment option.
+16.The instruction page will be loaded. With the specified question type, rules and time for each, permissions.what happen if breaks the rules etc...Then option for take test.
+17.The pages will be loaded for each questions, rules will be on the top of page, if multiple choice it jobseeker can choose the options, if text, there would be specified area for to answer, if its code, the space for area to answer(if possible, we can implement a code complier for that which job seeker can type the specified code and output will be generated. If that give maximum time for job seeker(optional)). Last if recuiter give small project, the job seeker can do that which should submitt in test assessment.
+Job seeker can submit the test.
+18.If recuiter gives big project the job seeker can submitt it by the deadline given bg recuiter.the page should have question of that and space to upload the project. It should be submit and zip file or folder(choose which is relevant). It that should include the screenshot or relevant things of output generated.
+20.Result generation:After test submittion, we need to generate a relevant results for that and it should be seen by jobseeker. If big project is there, the file should be attached in the results, if pending it shows pending only.
+21.Recuiter can see the result of the job seeker with questions and answer and the if projects is there, the file will be also attached and Recuiter can download and open it.
+If project pending, the result page show pending only.
+22.After it recuiter have option for to give a letter or offer letter to job seeker about the next step s, if it call for interview or anthing they can give al letter to jobseeker.it recuiter is not happy, he can decline the offer.
+23.The job seeker can take the tast as retest option, but the recuiter can see its the retest but dont effect any part of result or something
+Note:The assessment question should vary for the job seeker even if he take retest. He nned to follow the each steps that he done before it.

@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+
+{% block title %}Applications - Hirica{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('recruiter_dashboard') }}" class="text-decoration-none">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Applications</li>
+                </ol>
+            </nav>
+            <h1 class="display-6 fw-bold text-dark mb-2">Applications</h1>
+            <p class="text-muted">Review and manage candidate applications</p>
+        </div>
+    </div>
+    
+    {% if applications %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="border-0 fw-semibold px-4 py-3">Candidate</th>
+                            <th class="border-0 fw-semibold py-3">Job Title</th>
+                            <th class="border-0 fw-semibold py-3">Applied Date</th>
+                            <th class="border-0 fw-semibold py-3">Status</th>
+                            <th class="border-0 fw-semibold py-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in applications %}
+                        <tr>
+                            <td class="px-4 py-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar bg-primary text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                                        {{ app.applicant.first_name[0] }}{{ app.applicant.last_name[0] }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold">{{ app.applicant.get_full_name() }}</div>
+                                        <div class="text-muted small">{{ app.applicant.email }}</div>
+                                        {% if app.applicant.phone %}
+                                        <div class="text-muted small">{{ app.applicant.phone }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3">
+                                <div class="fw-semibold">{{ app.job.title }}</div>
+                                <div class="text-muted small">{{ app.job.location }}</div>
+                            </td>
+                            <td class="py-3">
+                                <div>{{ app.applied_at.strftime('%b %d, %Y') }}</div>
+                                <div class="text-muted small">{{ app.applied_at.strftime('%I:%M %p') }}</div>
+                            </td>
+                            <td class="py-3">
+                                <span class="badge bg-{% if app.status == 'approved' %}success{% elif app.status == 'rejected' %}danger{% elif app.status == 'assessment_sent' %}info{% elif app.status == 'completed' %}warning{% else %}secondary{% endif %} badge-lg">
+                                    {{ app.status.replace('_', ' ').title() }}
+                                </span>
+                            </td>
+                            <td class="py-3">
+                                <div class="d-flex gap-2">
+                                    <!-- View Application Details Button -->
+                                    <a href="{{ url_for('recruiter_application_detail', app_id=app.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye me-1"></i>View Details
+                                    </a>
+                                    
+                                    <!-- Status Update Dropdown -->
+                                    {% if app.status in ['pending', 'approved'] %}
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                            <i class="fas fa-cog me-1"></i>Update
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            {% if app.status == 'pending' %}
+                                            <li>
+                                                <form method="POST" action="{{ url_for('update_application_status', app_id=app.id) }}" class="d-inline">
+                                                    <input type="hidden" name="status" value="approved">
+                                                    <button type="submit" class="dropdown-item">
+                                                        <i class="fas fa-check text-success me-2"></i>Approve
+                                                    </button>
+                                                </form>
+                                            </li>
+                                            <li>
+                                                <form method="POST" action="{{ url_for('update_application_status', app_id=app.id) }}" class="d-inline">
+                                                    <input type="hidden" name="status" value="assessment_sent">
+                                                    <button type="submit" class="dropdown-item">
+                                                        <i class="fas fa-tasks text-info me-2"></i>Send Assessment
+                                                    </button>
+                                                </form>
+                                            </li>
+                                            <li>
+                                                <form method="POST" action="{{ url_for('update_application_status', app_id=app.id) }}" class="d-inline">
+                                                    <input type="hidden" name="status" value="rejected">
+                                                    <button type="submit" class="dropdown-item">
+                                                        <i class="fas fa-times text-danger me-2"></i>Reject
+                                                    </button>
+                                                </form>
+                                            </li>
+                                            {% elif app.status == 'approved' %}
+                                            <li>
+                                                <form method="POST" action="{{ url_for('update_application_status', app_id=app.id) }}" class="d-inline">
+                                                    <input type="hidden" name="status" value="assessment_sent">
+                                                    <button type="submit" class="dropdown-item">
+                                                        <i class="fas fa-tasks text-info me-2"></i>Send Assessment
+                                                    </button>
+                                                </form>
+                                            </li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <!-- View Resume -->
+                                    {% if app.applicant.resume_filename %}
+                                    <a href="{{ url_for('uploaded_file', filename=app.applicant.resume_filename) }}" 
+                                       target="_blank" class="btn btn-sm btn-outline-info">
+                                        <i class="fas fa-file-pdf me-1"></i>Resume
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Application Details Modal -->
+                        <div class="modal fade" id="coverLetterModal{{ app.id }}" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Application Details - {{ app.applicant.get_full_name() }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <strong>Job:</strong> {{ app.job.title }}
+                                        </div>
+                                        <div class="mb-3">
+                                            <strong>Applicant:</strong> {{ app.applicant.get_full_name() }} ({{ app.applicant.email }})
+                                        </div>
+                                        <div class="mb-3">
+                                            <strong>Applied on:</strong> {{ app.applied_at.strftime('%B %d, %Y at %I:%M %p') }}
+                                        </div>
+                                        <hr>
+                                        
+                                        <!-- Cover Letter Section -->
+                                        <h5 class="fw-bold text-secondary mb-3">Cover Letter</h5>
+                                        <div class="bg-light p-3 rounded mb-4">
+                                            {{ app.cover_letter|replace('\n', '<br>')|safe }}
+                                        </div>
+                                        
+                                        <!-- Assessment Details Section -->
+                                        <div class="assessment-details">
+                                            <h5 class="mb-3">AI Assessment Details</h5>
+                                            {% if app.assessment %}
+                                                <div class="assessment-content">
+                                                    <div class="mb-3">
+                                                        <strong>Status:</strong> 
+                                                        <span class="badge {% if app.assessment.status == 'pending' %}bg-warning{% elif app.assessment.status == 'approved' %}bg-success{% else %}bg-danger{% endif %}">
+                                                            {{ app.assessment.status|title }}
+                                                        </span>
+                                                    </div>
+                                                    
+                                                    {% if app.assessment.recruiter_feedback %}
+                                                        <div class="mb-3">
+                                                            <strong>Recruiter Feedback:</strong>
+                                                            <p class="text-muted">{{ app.assessment.recruiter_feedback }}</p>
+                                                        </div>
+                                                    {% endif %}
+
+                                                    <div class="assessment-levels">
+                                                        {% for level in app.assessment.content.levels %}
+                                                            <div class="card mb-4">
+                                                                <div class="card-header bg-primary text-white">
+                                                                    <h6 class="mb-0">Level {{ loop.index }}: {{ level.goal }}</h6>
+                                                                </div>
+                                                                <div class="card-body">
+                                                                    <div class="mb-3">
+                                                                        <strong>Format:</strong> {{ level.format }}
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <strong>Total Time:</strong> {{ level.total_time }} minutes
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <strong>Rules:</strong>
+                                                                        <ul class="list-unstyled ms-3">
+                                                                            {% for rule in level.rules %}
+                                                                                <li><i class="fas fa-check-circle text-success me-2"></i>{{ rule }}</li>
+                                                                            {% endfor %}
+                                                                        </ul>
+                                                                    </div>
+                                                                    
+                                                                    <div class="tasks-section">
+                                                                        <h6 class="mb-3">Tasks:</h6>
+                                                                        {% for task in level.tasks %}
+                                                                            <div class="card mb-3">
+                                                                                <div class="card-body bg-light">
+                                                                                    <h6 class="card-title">Task {{ loop.index }}</h6>
+                                                                                    <p class="card-text">{{ task.question|replace('\n', '<br>')|safe }}</p>
+                                                                                    
+                                                                                    {% if task.type == 'mcq' %}
+                                                                                        <div class="options-list">
+                                                                                            <strong>Options:</strong>
+                                                                                            <ul class="list-unstyled ms-3">
+                                                                                                {% for option in task.options %}
+                                                                                                    <li><i class="fas fa-circle me-2"></i>{{ option }}</li>
+                                                                                                {% endfor %}
+                                                                                            </ul>
+                                                                                        </div>
+                                                                                    {% elif task.type == 'short_text' or task.type == 'case_ethics' %}
+                                                                                        <div class="expected-answer">
+                                                                                            <strong>Expected Answer:</strong>
+                                                                                            <p class="text-muted">{{ task.expected_answer|default('N/A') }}</p>
+                                                                                        </div>
+                                                                                    {% elif task.type == 'coding' %}
+                                                                                        <div class="coding-details">
+                                                                                            <strong>Language:</strong> {{ task.language|default('N/A') }}<br>
+                                                                                            <strong>Expected Output:</strong> {{ task.expected_output|default('N/A') }}
+                                                                                        </div>
+                                                                                    {% endif %}
+                                                                                </div>
+                                                                            </div>
+                                                                        {% endfor %}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <p class="text-muted">No assessment details available.</p>
+                                            {% endif %}
+                                        </div>
+                                        
+                                    </div>
+                                    <div class="modal-footer">
+                                        {% if app.status == 'pending' %}
+                                        <form method="POST" action="{{ url_for('update_application_status', app_id=app.id) }}" class="d-inline me-2">
+                                            <input type="hidden" name="status" value="approved">
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="fas fa-check me-1"></i>Approve Application (Without Assessment)
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('update_application_status', app_id=app.id) }}" class="d-inline me-2">
+                                            <input type="hidden" name="status" value="assessment_sent"> {# This will trigger AI generation later #}
+                                            <button type="submit" class="btn btn-info">
+                                                <i class="fas fa-tasks me-1"></i>Send AI Assessment Request
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('update_application_status', app_id=app.id) }}" class="d-inline">
+                                            <input type="hidden" name="status" value="rejected">
+                                            <button type="submit" class="btn btn-danger">
+                                                <i class="fas fa-times me-1"></i>Reject Application
+                                            </button>
+                                        </form>
+                                        {% elif app.status == 'assessment_sent' and app.assessment and app.assessment.status == 'pending' %}
+                                        <form method="POST" action="{{ url_for('approve_assessment', assessment_id=app.assessment.id) }}" class="d-inline me-2">
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="fas fa-check me-1"></i>Approve Assessment
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('decline_assessment', assessment_id=app.assessment.id) }}" class="d-inline me-2">
+                                             {# Add a textarea for feedback within the form if needed #}
+                                            <button type="submit" class="btn btn-danger">
+                                                <i class="fas fa-times me-1"></i>Decline Assessment
+                                            </button>
+                                        </form>
+                                         {# TODO: Add a form and button for saving modifications #}
+                                         <button type="button" class="btn btn-primary">Save Modifications (TODO)</button>
+                                        {% elif app.status == 'completed' %}
+                                        {% if app.assessment_results %}
+                                             {% set result = app.assessment_results[0] %} {# Assuming one result per application #}
+                                             <div class="assessment-results-section">
+                                                 <h5 class="fw-bold text-secondary mb-3">Assessment Results</h5>
+                                                 <p><strong>Overall Score:</strong> {{ result.score | default(0) | round(1) }}%</p>
+                                                 <p><strong>Integrity Score:</strong> {{ result.integrity_score | default(0) | round(1) }}%</p>
+                                                 <h6>AI Evaluation Summary:</h6>
+                                                 <p>{{ (result.ai_evaluation | from_json).summary | default('No summary available.') }}</p>
+                                                 {# TODO: Display detailed feedback if needed #}
+                                             </div>
+                                             {# TODO: Add button to view full results page if implemented #}
+                                         {% else %}
+                                             <div class="alert alert-info" role="alert">
+                                                 Assessment completed, but results are not yet available.
+                                             </div>
+                                         {% endif %}
+                                        {% endif %}
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <img src="https://pixabay.com/get/g906cc4414d48d6c54f4e39fba3da51f0369a6ac3eb51754003fdd1772bb14cede5505a9ab8efdae9c03150cbb16138ca476451e67d8e7c39cfe25cd42aca83ff_1280.jpg" 
+                     alt="No applications" class="img-fluid rounded mb-4" style="max-height: 300px; object-fit: cover;">
+                <h3 class="fw-bold text-dark mb-3">No Applications Yet</h3>
+                <p class="text-muted mb-4">Applications will appear here once candidates start applying to your job postings.</p>
+                <a href="{{ url_for('post_job') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Post a Job
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Add nl2br filter functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Convert newlines to <br> tags in cover letters
+    document.querySelectorAll('.modal-body .bg-light').forEach(element => {
+        element.innerHTML = element.innerHTML.replace(/\n/g, '<br>');
+    });
+});
+</script>
+{% endblock %}

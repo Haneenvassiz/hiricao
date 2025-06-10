@@ -1,0 +1,469 @@
+{% extends "base.html" %}
+
+{% block title %}Assessment - {{ application.job.title }} - Hirica{% endblock %}
+
+{% block styles %}
+<style>
+    .question-container {
+        min-height: 500px;
+        position: relative;
+    }
+    
+    .question-content {
+        min-height: 300px;
+        resize: none;
+    }
+    
+    textarea.form-control {
+        min-height: 200px;
+        resize: vertical;
+    }
+    
+    .card {
+        min-height: 100px;
+    }
+    
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .progress {
+        min-width: 100px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('jobseeker_dashboard') }}" class="text-decoration-none">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Assessment</li>
+                </ol>
+            </nav>
+            <h1 class="display-6 fw-bold text-dark mb-2">Skill Assessment</h1>
+            <p class="text-muted">{{ application.job.title }} at {{ application.job.recruiter.company or 'Company' }}</p>
+        </div>
+    </div>
+    
+    <!-- Debugging: Display questions data -->
+    <pre id="questions-debug" style="display: none; border: 1px solid #ccc; padding: 10px; background-color: #f9f9f9;">{{ questions | tojson(indent=2) }}</pre>
+    <button class="btn btn-sm btn-outline-info mb-3" onclick="document.getElementById('questions-debug').style.display = document.getElementById('questions-debug').style.display === 'none' ? 'block' : 'none';">Toggle Questions Debug Data</button>
+    
+    <!-- Assessment Info -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-lg-8">
+                            <h5 class="fw-bold text-dark mb-2">Assessment Instructions</h5>
+                            <ul class="text-muted mb-0">
+                                <li>This assessment contains {{ questions|length }} questions</li>
+                                <li>Each question has a time limit - manage your time wisely</li>
+                                <li>Answer all questions to the best of your ability</li>
+                                <li>You cannot go back once you move to the next question</li>
+                                <li>Be honest and authentic in your responses</li>
+                            </ul>
+                        </div>
+                        <div class="col-lg-4 text-lg-end">
+                            <div class="bg-primary text-white rounded p-3 text-center">
+                                <div class="fw-bold fs-4" id="totalTimer">45:00</div>
+                                <small>Total Time Remaining</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Assessment Form -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form id="assessmentForm" method="POST" action="{{ url_for('submit_assessment', app_id=application.id) }}">
+                        <input type="hidden" name="time_taken" id="timeTaken" value="0">
+                        
+                        {% for question in questions %}
+                        <div class="question-container" id="question{{ question.id }}" {% if loop.index > 1 %}style="display: none;"{% endif %}>
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5 class="fw-bold text-dark mb-0">Question {{ loop.index }} of {{ questions|length }}</h5>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="text-muted">
+                                        <i class="fas fa-clock me-1"></i>
+                                        <span id="questionTimer{{ question.id }}">{{ question.time_limit }}:00</span>
+                                    </div>
+                                    <div class="progress" style="width: 100px; height: 8px;">
+                                        <div class="progress-bar" role="progressbar" style="width: {{ (loop.index / questions|length) * 100 }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="question-content bg-light rounded p-4 mb-4">
+                                <h6 class="fw-semibold mb-3">{{ question.question }}</h6>
+                                {% if question.word_limit %}
+                                <p class="text-muted mb-3"><small>Word limit: {{ question.word_limit }}</small></p>
+                                {% endif %}
+
+                                {% if question.rules %}
+                                <div class="alert alert-info border-0 mt-3 mb-3">
+                                    <strong>Rules:</strong>
+                                    <ul class="mb-0">
+                                        {% for rule in question.rules.split('\n') %}
+                                        <li>{{ rule }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                {% endif %}
+
+                                {% if question.type == 'text' or question.type == 'case_study' or question.type == 'case_ethics' or question.type == 'design_scenario' or question.type == 'open-ended' %}
+                                <textarea name="answer_{{ question.id }}" 
+                                         class="form-control" 
+                                         rows="8" 
+                                         placeholder="Type your answer here..." 
+                                         required></textarea>
+                                {% elif question.type == 'code' or question.type == 'coding' or question.type == 'code-writing' %}
+                                <div class="mb-2">
+                                    <small class="text-muted">Write your code below:</small>
+                                </div>
+                                <textarea name="answer_{{ question.id }}" 
+                                         class="form-control font-monospace" 
+                                         rows="12" 
+                                         placeholder="// Write your code here
+function solution() {
+    // Your implementation
+}" 
+                                         required></textarea>
+                                {% elif question.type == 'mcq' or question.type == 'multiple-choice' %}
+                                <div class="mcq-options">
+                                    {% for option in question.options %}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="answer_{{ question.id }}" id="option_{{ question.id }}_{{ loop.index }}" value="{{ option }}" required>
+                                        <label class="form-check-label" for="option_{{ question.id }}_{{ loop.index }}">
+                                            {{ option }}
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% elif question.type == 'project' %}
+                                <div class="project-upload">
+                                    <label for="answer_{{ question.id }}" class="form-label text-muted">Upload your project file(s) or archive:</label>
+                                    <input class="form-control" type="file" name="answer_{{ question.id }}" id="answer_{{ question.id }}" multiple required>
+                                    <small class="form-text text-muted">Accepted formats: .zip, .tar.gz, .rar, etc. (or specific file types if needed)</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="d-flex justify-content-between">
+                                {% if loop.index > 1 %}
+                                <button type="button" class="btn btn-outline-secondary" onclick="previousQuestion({{ question.id }})">
+                                    <i class="fas fa-arrow-left me-1"></i>Previous
+                                </button>
+                                {% else %}
+                                <div></div>
+                                {% endif %}
+                                
+                                {% if loop.index < questions|length %}
+                                <button type="button" class="btn btn-primary" onclick="nextQuestion({{ question.id }})">
+                                    Next<i class="fas fa-arrow-right ms-1"></i>
+                                </button>
+                                {% else %}
+                                <button type="button" class="btn btn-success btn-lg" onclick="submitAssessment()">
+                                    <i class="fas fa-check me-1"></i>Submit Assessment
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Anti-Cheat Warning -->
+            <div class="alert alert-warning border-0 mt-4">
+                <h6 class="alert-heading"><i class="fas fa-shield-alt me-2"></i>Assessment Monitoring</h6>
+                <p class="mb-0">This assessment is monitored for integrity. Please do not switch tabs, resize your browser, or use external tools. Any suspicious activity may result in automatic disqualification.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Submit Confirmation Modal -->
+<div class="modal fade" id="submitModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Submit Assessment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to submit your assessment? Once submitted, you cannot make changes.</p>
+                <div class="alert alert-info border-0">
+                    <strong>Questions answered:</strong> <span id="answeredCount">0</span> of {{ questions|length }}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Review Answers</button>
+                <button type="button" class="btn btn-success" onclick="confirmSubmit()">
+                    <i class="fas fa-check me-1"></i>Submit Assessment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentQuestion = 1;
+let totalQuestions = {{ questions|length }};
+let startTime = Date.now();
+let questionTimers = {};
+let totalTimeRemaining = 45 * 60; // 45 minutes in seconds
+
+// Initialize question timers
+{% for question in questions %}
+questionTimers[{{ question.id }}] = {{ question.time_limit }} * 60; // Convert to seconds
+{% endfor %}
+
+// Start total timer
+let totalInterval = setInterval(updateTotalTimer, 1000);
+
+// Anti-cheat monitoring
+let tabSwitchCount = 0;
+let warningShown = false;
+let violationReported = false; // Flag to prevent multiple reports
+const MAX_TAB_SWITCHES_BEFORE_GRACE = 2; // Allow 2 switches before grace period ends
+const MAX_TAB_SWITCHES_BEFORE_REPORT = MAX_TAB_SWITCHES_BEFORE_GRACE + 1; // Report on the 3rd switch
+
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        tabSwitchCount++;
+        console.log(`Tab switch detected. Count: ${tabSwitchCount}`); // Debug log
+
+        if (tabSwitchCount > MAX_TAB_SWITCHES_BEFORE_GRACE && !violationReported) {
+            violationReported = true; // Set flag
+            reportViolation('tab_switch', `Exceeded grace tab switch limit (${MAX_TAB_SWITCHES_BEFORE_GRACE})`);
+            // The backend will now decide to cancel and signal via the response.
+            // We don't immediately show a severe warning or cancel here.
+        } else if (tabSwitchCount <= MAX_TAB_SWITCHES_BEFORE_GRACE && !warningShown) {
+            // Warning during grace period
+            warningShown = true; // Show this warning only once
+            alert(`Warning: You have ${MAX_TAB_SWITCHES_BEFORE_GRACE - tabSwitchCount} tab switch(es) remaining before a potential violation is recorded.`);
+        }
+    }
+});
+
+// Prevent right-click and keyboard shortcuts
+document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+});
+
+document.addEventListener('keydown', function(e) {
+    // Prevent F12, Ctrl+Shift+I, Ctrl+U, etc.
+    if (e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+        (e.ctrlKey && e.key === 'u')) {
+        e.preventDefault();
+        alert('Developer tools are disabled during the assessment.');
+    }
+});
+
+function updateTotalTimer() {
+    totalTimeRemaining--;
+    
+    if (totalTimeRemaining <= 0) {
+        alert('Time is up! Submitting your assessment now.');
+        document.getElementById('assessmentForm').submit();
+        return;
+    }
+    
+    let minutes = Math.floor(totalTimeRemaining / 60);
+    let seconds = totalTimeRemaining % 60;
+    document.getElementById('totalTimer').textContent = 
+        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    // Update time taken
+    let timeTaken = Math.floor((Date.now() - startTime) / 60000); // in minutes
+    document.getElementById('timeTaken').value = timeTaken;
+}
+
+function nextQuestion(currentId) {
+    // Hide current question
+    document.getElementById(`question${currentId}`).style.display = 'none';
+    
+    // Show next question
+    currentQuestion++;
+    if (currentQuestion <= totalQuestions) {
+        let nextQuestionId = currentId + 1;
+        document.getElementById(`question${nextQuestionId}`).style.display = 'block';
+        
+        // Start timer for next question
+        startQuestionTimer(nextQuestionId);
+    }
+}
+
+function previousQuestion(currentId) {
+    // Hide current question
+    document.getElementById(`question${currentId}`).style.display = 'none';
+    
+    // Show previous question
+    currentQuestion--;
+    if (currentQuestion >= 1) {
+        let prevQuestionId = currentId - 1;
+        document.getElementById(`question${prevQuestionId}`).style.display = 'block';
+    }
+}
+
+function startQuestionTimer(questionId) {
+    let timer = questionTimers[questionId];
+    let timerElement = document.getElementById(`questionTimer${questionId}`);
+    
+    let interval = setInterval(function() {
+        timer--;
+        
+        let minutes = Math.floor(timer / 60);
+        let seconds = timer % 60;
+        timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (timer <= 0) {
+            clearInterval(interval);
+            alert('Time is up for this question! Moving to the next question.');
+            nextQuestion(questionId);
+        }
+    }, 1000);
+}
+
+function submitAssessment() {
+    // Count answered questions
+    let answeredCount = 0;
+    
+    {% for question in questions %}
+    let answer{{ question.id }};
+    {% if question.type == 'multiple-choice' %}
+    answer{{ question.id }} = document.querySelector('input[name="answer_{{ question.id }}"]:checked')?.value;
+    {% else %}
+    answer{{ question.id }} = document.querySelector('textarea[name="answer_{{ question.id }}"]')?.value.trim();
+    {% endif %}
+    if (answer{{ question.id }}) answeredCount++;
+    {% endfor %}
+    
+    document.getElementById('answeredCount').textContent = answeredCount;
+    
+    // Show confirmation modal
+    new bootstrap.Modal(document.getElementById('submitModal')).show();
+}
+
+function confirmSubmit() {
+    // Clear all timers
+    clearInterval(totalInterval);
+    
+    // Add anti-cheating data to form
+    let form = document.getElementById('assessmentForm');
+    let tabSwitchInput = document.createElement('input');
+    tabSwitchInput.type = 'hidden';
+    tabSwitchInput.name = 'tab_switch_count';
+    tabSwitchInput.value = tabSwitchCount;
+    form.appendChild(tabSwitchInput);
+    
+    // Submit the form
+    form.submit();
+}
+
+// Auto-resize textareas
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('textarea').forEach(textarea => {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    });
+    
+    // Start timer for first question
+    {% if questions %}
+    startQuestionTimer({{ questions[0].id }});
+    {% endif %}
+});
+
+// Warn user before leaving page
+window.addEventListener('beforeunload', function(e) {
+    e.preventDefault();
+    e.returnValue = '';
+});
+
+// Function to stop the assessment on the frontend
+function stopAssessment() {
+    // Clear all timers
+    clearInterval(totalInterval);
+    // Stop individual question timers (assuming they are stored and accessible)
+    // You might need a way to keep track of all active question interval IDs
+    // For simplicity here, we only clear the total timer.
+
+    // Disable all form inputs and buttons
+    document.querySelectorAll('#assessmentForm input, #assessmentForm textarea, #assessmentForm button').forEach(el => el.disabled = true);
+}
+
+// Function to show a disqualified message
+function showDisqualifiedMessage(reason) {
+    const container = document.querySelector('.container.py-4'); // Assuming this is your main content container
+    if (container) {
+        container.innerHTML = `
+            <div class="alert alert-danger mt-4" role="alert">
+                <h4 class="alert-heading">Assessment Cancelled</h4>
+                <p>Your assessment has been cancelled due to rule violations.</p>
+                <hr>
+                <p class="mb-0">Reason: ${reason}</p>
+            </div>
+            <div class="text-center mt-4">
+                 <a href="{{ url_for('jobseeker_dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
+            </div>
+        `;
+    } else {
+        // Fallback if main container not found
+        document.body.innerHTML = `
+            <h2 style="color:red;">Assessment Cancelled</h2>
+            <p>Reason: ${reason}</p>
+            <a href="{{ url_for('jobseeker_dashboard') }}">Go to Dashboard</a>
+        `;
+    }
+}
+
+// Modify the reportViolation fetch callback to handle cancellation signal
+function reportViolation(type, details) {
+    const appId = {{ application.id }}; // Assuming application ID is available in template context
+    const url = `/assessment/${appId}/violation`;
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            violation_type: type,
+            details: details,
+            timestamp: new Date().toISOString(),
+            current_question: currentQuestion // Send current question number
+        }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Violation reported successfully.', data);
+            if (data.cancel_assessment) { // Check the cancellation signal from backend
+                stopAssessment();
+                showDisqualifiedMessage(details); // Use details from the violation report
+            }
+        } else {
+            console.error('Failed to report violation.', data);
+            // Handle reporting failure if necessary
+        }
+    })
+    .catch((error) => {
+        console.error('Error reporting violation:', error);
+        // Handle fetch error if necessary
+    });
+}
+</script>
+{% endblock %}
