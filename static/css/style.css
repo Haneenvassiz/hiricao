@@ -306,6 +306,162 @@ body {
   filter: brightness(1.2);
 }
 
+/* Admin Dashboard Styles */
+.admin-metric-card {
+  background-color: var(--background-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.3s ease;
+}
+
+.admin-metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px var(--shadow-color);
+}
+
+.metric-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.metric-icon.bg-primary {
+  background-color: var(--primary-color);
+}
+
+.metric-icon.bg-success {
+  background-color: var(--success-color);
+}
+
+.metric-icon.bg-warning {
+  background-color: var(--warning-color);
+  color: #000;
+}
+
+.metric-icon.bg-danger {
+  background-color: var(--danger-color);
+}
+
+.metric-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.metric-label {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+/* Text color fixes */
+.text-light-75 {
+  color: var(--text-secondary) !important;
+}
+
+.page-title {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+/* Badge improvements */
+.badge-secondary {
+  background-color: var(--background-hover);
+  color: var(--text-primary);
+}
+
+.badge-lg {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.badge-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+/* Hero visual card */
+.floating-card {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-visual {
+  background-color: var(--background-card);
+  border: 1px solid var(--border-color);
+}
+
+.company-logo {
+  width: 40px;
+  height: 40px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+/* Min height utility */
+.min-vh-75 {
+  min-height: 75vh;
+}
+
+/* Hero title */
+.hero-title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+}
+
+.hero-subtitle {
+  font-size: 1.25rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+/* Shadow utilities */
+.shadow-xl {
+  box-shadow: 0 20px 60px var(--shadow-color);
+}
+
+/* Profile form improvements */
+.profile-form .form-text {
+  color: var(--text-muted);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2.5rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.125rem;
+  }
+  
+  .admin-metric-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+  }
+}
+
 /* Job Cards */
 .job-card {
   background-color: var(--background-card);
