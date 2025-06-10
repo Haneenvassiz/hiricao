@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Assessment Instructions - Hirica{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('jobseeker_dashboard') }}" class="text-decoration-none">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Assessment Instructions</li>
+                </ol>
+            </nav>
+            <h1 class="display-6 fw-bold text-dark mb-2">Assessment Instructions</h1>
+            <p class="text-muted">{{ application.job.title }} at {{ application.job.recruiter.company or 'Company' }}</p>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header fw-bold">Instructions</div>
+                <div class="card-body">
+                    <h5 class="card-title">Assessment Details</h5>
+                    <p><strong>Total Questions:</strong> {{ total_questions }}</p>
+                    <p><strong>Time Limit:</strong> {{ total_time_minutes }} minutes</p>
+                    <p><strong>Allowed Tools:</strong> {{ allowed_tools }}</p>
+
+                    <h5 class="card-title mt-4">Important Rules</h5>
+                    {# TODO: Display more detailed rules from assessment.rules JSON #}
+                    <ul>
+                        <li>Do not switch tabs excessively. Violations may lead to cancellation.</li>
+                        {# Add other general rules or rules from assessment.rules #}
+                        {% if assessment.rules %}
+                            {% for key, value in assessment.rules.items() %}
+                                <li><strong>{{ key|replace('_', ' ')|title }}:</strong> {{ value }}</li>
+                            {% endfor %}
+                        {% endif %}
+                    </ul>
+
+                    <h5 class="card-title mt-4">Before You Begin</h5>
+                    <ul>
+                        <li>Ensure you have a stable internet connection.</li>
+                        <li>Find a quiet environment where you won't be interrupted.</li>
+                        <li>Read each question carefully.</li>
+                    </ul>
+
+                    <div class="text-center mt-4">
+                         <a href="{{ url_for('take_assessment', app_id=application.id) }}" class="btn btn-primary btn-lg">
+                             I'm ready to begin
+                         </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

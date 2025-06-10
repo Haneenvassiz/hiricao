@@ -720,6 +720,7 @@ def admin_dashboard():
     total_assessments = Assessment.query.count()
     
     # Anti-cheat violations
+    from models import AntiCheatLog
     recent_violations = db.session.query(func.count()).select_from(AntiCheatLog).scalar() or 0
     
     # Recent activity

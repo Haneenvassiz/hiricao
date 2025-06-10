@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block title %}Post Job - Hirica{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('recruiter_dashboard') }}" class="text-decoration-none">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Post Job</li>
+                </ol>
+            </nav>
+            <h1 class="display-6 fw-bold text-dark mb-2">Post New Job</h1>
+            <p class="text-muted">Create a comprehensive job posting to attract the right candidates</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Basic Information -->
+                        <div class="mb-4">
+                            <h5 class="fw-bold text-dark mb-3">Basic Information</h5>
+                            
+                            <div class="mb-3">
+                                {{ form.title.label(class="form-label fw-semibold") }}
+                                {{ form.title(class="form-control form-control-lg", placeholder="e.g. Senior Software Engineer") }}
+                                {% if form.title.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.title.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form.location.label(class="form-label fw-semibold") }}
+                                    {{ form.location(class="form-control", placeholder="e.g. San Francisco, CA") }}
+                                    {% if form.location.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.location.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    {{ form.employment_type.label(class="form-label fw-semibold") }}
+                                    {{ form.employment_type(class="form-select") }}
+                                    {% if form.employment_type.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.employment_type.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form.experience_level.label(class="form-label fw-semibold") }}
+                                    {{ form.experience_level(class="form-select") }}
+                                    {% if form.experience_level.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.experience_level.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    {{ form.deadline.label(class="form-label fw-semibold") }}
+                                    {{ form.deadline(class="form-control", type="date") }}
+                                    {% if form.deadline.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.deadline.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Job Description -->
+                        <div class="mb-4">
+                            <h5 class="fw-bold text-dark mb-3">Job Details</h5>
+                            
+                            <div class="mb-3">
+                                {{ form.description.label(class="form-label fw-semibold") }}
+                                {{ form.description(class="form-control", rows="6", placeholder="Provide a detailed description of the role, company culture, and what makes this opportunity unique...") }}
+                                {% if form.description.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.description.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                {{ form.responsibilities.label(class="form-label fw-semibold") }}
+                                {{ form.responsibilities(class="form-control", rows="4", placeholder="• Lead development of new features\n• Collaborate with cross-functional teams\n• Mentor junior developers") }}
+                                {% if form.responsibilities.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.responsibilities.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                {{ form.requirements.label(class="form-label fw-semibold") }}
+                                {{ form.requirements(class="form-control", rows="4", placeholder="• 5+ years of software development experience\n• Strong knowledge of Python/JavaScript\n• Experience with cloud platforms") }}
+                                {% if form.requirements.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.requirements.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Skills and Compensation -->
+                        <div class="mb-4">
+                            <h5 class="fw-bold text-dark mb-3">Skills & Compensation</h5>
+                            
+                            <div class="mb-3">
+                                {{ form.skills_required.label(class="form-label fw-semibold") }}
+                                {{ form.skills_required(class="form-control", placeholder="Python, JavaScript, React, AWS, Docker") }}
+                                <div class="form-text">Enter skills separated by commas</div>
+                                {% if form.skills_required.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.skills_required.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    {{ form.salary_min.label(class="form-label fw-semibold") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.salary_min(class="form-control", placeholder="80000") }}
+                                    </div>
+                                    {% if form.salary_min.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.salary_min.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    {{ form.salary_max.label(class="form-label fw-semibold") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.salary_max(class="form-control", placeholder="120000") }}
+                                    </div>
+                                    {% if form.salary_max.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.salary_max.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="form-check">
+                                {{ form.degree_required(class="form-check-input") }}
+                                {{ form.degree_required.label(class="form-check-label") }}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-3">
+                            {{ form.submit(class="btn btn-primary btn-lg px-4") }}
+                            <a href="{{ url_for('recruiter_dashboard') }}" class="btn btn-outline-secondary btn-lg px-4">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h6 class="fw-bold text-dark mb-3">💡 Tips for Great Job Posts</h6>
+                    <ul class="list-unstyled small">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Use clear, descriptive job titles
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Include specific skills and requirements
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Mention company culture and benefits
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Set realistic salary ranges
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Be transparent about expectations
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="fw-bold text-dark mb-3">🤖 AI-Powered Features</h6>
+                    <p class="small text-muted mb-3">Once your job is posted, Hirica will:</p>
+                    <ul class="list-unstyled small">
+                        <li class="mb-2">
+                            <i class="fas fa-brain text-primary me-2"></i>
+                            Generate role-specific assessments
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-chart-line text-primary me-2"></i>
+                            Provide candidate matching scores
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-shield-alt text-primary me-2"></i>
+                            Enable anti-cheat monitoring
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-resize textareas
+    const textareas = document.querySelectorAll('textarea');
+    textareas.forEach(textarea => {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    });
+    
+    // Skills input enhancement
+    const skillsInput = document.getElementById('skills_required');
+    if (skillsInput) {
+        skillsInput.addEventListener('input', function() {
+            // Add visual feedback for skills being typed
+            const skills = this.value.split(',').map(s => s.trim()).filter(s => s);
+            // You could add skill validation or suggestions here
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Application Details - Hirica{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('recruiter_dashboard') }}" class="text-decoration-none">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('recruiter_applications') }}" class="text-decoration-none">Applications</a></li>
+                    <li class="breadcrumb-item active">Application Details</li>
+                </ol>
+            </nav>
+            <h1 class="display-6 fw-bold text-dark mb-2">Application Details</h1>
+            <p class="text-muted">Review details and manage the assessment for {{ application.applicant.get_full_name() }}</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header fw-bold">Applicant Information</div>
+                <div class="card-body">
+                    <p><strong>Name:</strong> {{ application.applicant.get_full_name() }}</p>
+                    <p><strong>Email:</strong> {{ application.applicant.email }}</p>
+                    <p><strong>Applied for:</strong> {{ application.job.title }}</p>
+                    <p><strong>Applied on:</strong> {{ application.applied_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                    <p><strong>Current Status:</strong> 
+                        <span class="badge bg-{% if application.status == 'approved' %}success{% elif application.status == 'rejected' %}danger{% elif application.status == 'assessment_sent' %}info{% elif application.status == 'completed' %}warning{% elif application.status == 'assessment_pending_review' %}primary{% else %}secondary{% endif %} badge-lg">
+                            {{ application.status.replace('_', ' ').title() }}
+                        </span>
+                    </p>
+                     {% if application.applicant.resume_filename %}
+                        <p><strong>Resume:</strong> <a href="{{ url_for('uploaded_file', filename=application.applicant.resume_filename) }}" target="_blank">Download Resume</a></p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header fw-bold">Cover Letter</div>
+                <div class="card-body">
+                    <p>{{ application.cover_letter or 'No cover letter provided.' }}</p>
+                </div>
+            </div>
+
+            {% if assessment %}
+            <div class="card mb-4">
+                <div class="card-header fw-bold">Assessment Details</div>
+                <div class="card-body">
+                    <h6>{{ assessment.title }}</h6>
+                    <p>{{ assessment.description }}</p>
+                     <p><strong>Status:</strong> {{ assessment.status|title }}</p>
+                     <p><strong>AI Generated:</strong> {{ 'Yes' if assessment.ai_generated else 'No' }}</p>
+                     <p><strong>Difficulty:</strong> {{ assessment.difficulty_level|title if assessment.difficulty_level else 'N/A' }}</p>
+                     <p><strong>Type:</strong> {{ assessment.assessment_type|title if assessment.assessment_type else 'N/A' }}</p>
+                     <p><strong>Time Limit:</strong> {{ assessment.time_limit if assessment.time_limit else 'N/A' }} minutes</p>
+
+                    {% if assessment.content %}
+                        {% set assessment_content = assessment.content | from_json %}
+                         <h6 class="mt-4">Assessment Content:</h6>
+
+                         <form id="assessmentContentForm" method="POST" action="{{ url_for('update_assessment_content', assessment_id=assessment.id) }}">
+                            {# Display levels and tasks #}
+                            {% for level in assessment_content.get('levels', []) %}
+                                <div class="mb-3 p-3 border rounded bg-light">
+                                    <strong>Level:</strong> {{ level.get('name', 'N/A') }}
+                                    <br><strong>Goal:</strong> {{ level.get('goal', 'N/A') }}
+                                    <br><strong>Format:</strong> {{ level.get('format', 'N/A') }}
+                                    <br><strong>Level Time:</strong> {{ level.get('total_time_minutes', 'N/A') }} minutes
+                                    <h6 class="mt-2 mb-1">Tasks:</h6>
+                                    {% for task in level.get('tasks', []) %}
+                                        <div class="mb-2 ps-3">
+                                            <p class="mb-1"><strong>Task {{ loop.index }}:</strong> {{ task.get('question', '') }}</p>
+                                            <small class="text-muted">
+                                                Type: {{ task.get('type', 'N/A') }}
+                                                {% if task.get('time_limit_minutes') %}, Time: {{ task.get('time_limit_minutes') }} mins{% endif %}
+                                                {% if task.get('word_limit') %}, Word Limit: {{ task.get('word_limit') }}{% endif %}
+                                                {# Display options for MCQ if available #}
+                                                {% if task.get('type') == 'mcq' and task.get('options') %}
+                                                     <br>Options: {{ task.get('options') | join(', ') }}
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                        <div class="form-group mb-2 ps-3">
+                                           <label for="rules_{{ task.get('task_id', loop.index) }}" class="form-label text-muted"><small>Rules/Options:</small></label>
+                                           <textarea class="form-control" name="rules_{{ task.get('task_id', loop.index) }}" id="rules_{{ task.get('task_id', loop.index) }}" rows="2" placeholder="Enter any specific rules or options for this question here (e.g., 'No external libraries allowed', 'Choose exactly 3 options'). Use new lines for multiple rules.">{{ task.get('rules', '') }}</textarea>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endfor %}
+                            <button type="submit" class="btn btn-primary mt-3">Save Assessment Content Changes</button>
+                         </form>
+                    {% else %}
+                         <p>No detailed assessment content available yet.</p>
+                    {% endif %}
+
+                </div>
+            </div>
+
+            {# Assessment Actions #}
+            <div class="card mb-4">
+                <div class="card-header fw-bold">Assessment Actions</div>
+                <div class="card-body">
+                    {% if application.status == 'assessment_pending_review' and assessment and assessment.status == 'pending' %}
+                        <p>This assessment is pending your review and approval before being sent to the job seeker.</p>
+                         <form method="POST" action="{{ url_for('approve_assessment', assessment_id=assessment.id) }}" class="d-inline me-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check me-1"></i>Approve Assessment
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('decline_assessment', assessment_id=assessment.id) }}" class="d-inline">
+                             <div class="form-group d-inline-block me-2" style="width: 250px;">
+                                <textarea class="form-control" name="feedback" rows="1" placeholder="Reason for decline (optional)"></textarea>
+                             </div>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-times me-1"></i>Decline Assessment
+                            </button>
+                        </form>
+                         {# TODO: Add a form/modal for modifying assessment content before approving #}
+                         <button type="button" class="btn btn-secondary mt-2" data-bs-toggle="modal" data-bs-target="#modifyAssessmentModal">Modify Assessment (TODO)</button>
+                    {% elif assessment and assessment.status == 'approved' %}
+                        <p>This assessment has been approved.</p>
+                        {% if application.status != 'assessment_sent' and application.status != 'completed' %}
+                             <form method="POST" action="{{ url_for('update_application_status', app_id=application.id) }}" class="d-inline">
+                                <input type="hidden" name="status" value="assessment_sent">
+                                <button type="submit" class="btn btn-primary">
+                                     Send Assessment to Job Seeker
+                                </button>
+                            </form>
+                        {% elif application.status == 'assessment_sent' %}
+                             <p class="text-success">Assessment has been sent to the job seeker.</p>
+                        {% endif %}
+                    {% elif assessment and assessment.status == 'rejected' %}
+                        <p class="text-danger">This assessment was declined.</p>
+                         {% if assessment.recruiter_feedback %}
+                             <p><strong>Feedback:</strong> {{ assessment.recruiter_feedback }}</p>
+                         {% endif %}
+                         {# Option to regenerate? #}
+                         {% if assessment.regeneration_count < 3 %} {# Assuming max 3 regenerations #}
+                            <form method="POST" action="{{ url_for('decline_assessment', assessment_id=assessment.id) }}" class="d-inline">
+                                <button type="submit" class="btn btn-warning">
+                                     Regenerate Assessment
+                                </button>
+                            </form>
+                         {% else %}
+                             <p class="text-warning">Maximum regeneration attempts reached for this assessment.</p>
+                         {% endif %}
+                    {% elif application.status == 'assessment_cancelled_violation' %}
+                        <p class="text-danger">This assessment was cancelled due to a violation.</p>
+                        {# TODO: Display violation details here #}
+                         {% if application.result and application.result.violation_flags %}
+                             <div class="alert alert-warning mt-2">
+                                 <strong>Violation Details:</strong>
+                                 <ul>
+                                     {% for violation in application.result.violation_flags %}
+                                         <li>Type: {{ violation.get('type', 'N/A') }}, Details: {{ violation.get('details', 'N/A') }}, Question: {{ violation.get('question', 'N/A') }}</li>
+                                     {% endfor %}
+                                 </ul>
+                             </div>
+                         {% endif %}
+                        <form method="POST" action="{{ url_for('allow_retake', app_id=application.id) }}" class="d-inline">
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-redo me-1"></i> Allow Retake
+                            </button>
+                        </form>
+                    {% elif application.status == 'assessment_requested' %}
+                         <div class="alert alert-info" role="alert">
+                            The job seeker has requested an assessment. An AI-generated assessment is being prepared (or is pending generation).
+                             {# Option to trigger generation if not already happening? - Note: The route already triggers generation if none exists when status is updated to assessment_sent, which is now assessment_pending_review #}
+                        </div>
+                   {% endif %}
+
+                </div>
+            </div>
+            {% else %}
+                <div class="alert alert-info" role="alert">
+                    No assessment has been generated or requested for this application yet.
+                </div>
+            {% endif %}
+
+             {# Display Assessment Results if available #}
+             {% if assessment_result %}
+             <div class="card border-0 shadow-sm mb-4">
+                 <div class="card-header bg-white">
+                     <h5 class="fw-bold text-dark mb-0">Assessment Results</h5>
+                 </div>
+                 <div class="card-body">
+                     <!-- Overall Score Card -->
+                     <div class="mb-4">
+                         <h6 class="fw-bold text-dark mb-3">Overall Performance</h6>
+                         <div class="row">
+                             <div class="col-md-6">
+                                 <div class="d-flex align-items-center mb-3">
+                                     <div class="display-4 fw-bold text-primary me-3">{{ assessment_result.score|round(1) }}%</div>
+                                     <div class="text-muted">
+                                         <div>Overall Score</div>
+                                         <small>Based on answers and performance</small>
+                                     </div>
+                                 </div>
+                             </div>
+                             <div class="col-md-6">
+                                  <div class="d-flex align-items-center">
+                                     <div class="display-4 fw-bold text-success me-3">{{ assessment_result.integrity_score|round(1) }}%</div>
+                                     <div class="text-muted">
+                                         <div>Integrity Score</div>
+                                         <small>Based on assessment behavior</small>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+                         <div class="bg-light rounded p-3 mt-3">
+                              <h6 class="fw-bold mb-3">Assessment Details</h6>
+                              <p class="mb-2"><i class="fas fa-clock me-2"></i>Time Taken: {{ assessment_result.time_taken }} minutes</p>
+                              <p class="mb-2"><i class="fas fa-calendar me-2"></i>Completed: {{ assessment_result.completed_at.strftime('%B %d, %Y') if assessment_result.completed_at else 'N/A' }}</p>
+                              {# TODO: Add total questions if available in result #}
+                          </div>
+                     </div>
+
+                     <!-- AI Evaluation Summary Card -->
+                     <div class="mb-4">
+                         <h6 class="fw-bold text-dark mb-3">AI Evaluation Summary</h6>
+                         <div class="ai-evaluation-summary bg-light rounded p-3">
+                             {% set ai_eval = assessment_result.ai_evaluation | from_json %}
+                             {{ ai_eval.summary | default('No summary available.') }}
+                         </div>
+                     </div>
+
+                     <!-- Detailed Feedback Card -->
+                     <div class="mb-4">
+                         <h6 class="fw-bold text-dark mb-3">Detailed Feedback</h6>
+                         <div class="detailed-feedback bg-light rounded p-3">
+                              {% set feedback = (assessment_result.ai_evaluation|from_json).feedback %}
+                              {% if feedback %}
+                                  {% for category, details in feedback.items() %}
+                                      <div class="feedback-category mb-3">
+                                          <h6 class="fw-bold text-primary">{{ category|replace('_', ' ')|title }}</h6>
+                                          <p class="text-muted mb-0">{{ details }}</p>
+                                      </div>
+                                  {% endfor %}
+                              {% else %}
+                                  <p class="text-muted mb-0">No detailed feedback available.</p>
+                              {% endif %}
+                         </div>
+                     </div>
+
+                     <!-- Integrity Report Card -->
+                     <div class="mb-4">
+                         <h6 class="fw-bold text-dark mb-3">Integrity Report</h6>
+                         <div class="integrity-report bg-light rounded p-3">
+                              <div class="row">
+                                  <div class="col-md-6">
+                                      <div class="mb-3">
+                                          <h6 class="fw-bold">Tab Switches</h6>
+                                          <p class="text-muted mb-0">{{ assessment_result.tab_switches }} detected</p>
+                                      </div>
+                                  </div>
+                                  <div class="col-md-6">
+                                      <div class="mb-3">
+                                          <h6 class="fw-bold">Copy/Paste Attempts</h6>
+                                          <p class="text-muted mb-0">{{ assessment_result.copy_paste_attempts }} detected</p>
+                                      </div>
+                                  </div>
+                              </div>
+                              {% set violation_flags = assessment_result.violation_flags | from_json %}
+                              {% if violation_flags %}
+                                  <div class="alert alert-warning mt-3">
+                                      <h6 class="alert-heading">Suspicious Activity Details</h6>
+                                      <ul>
+                                          {% for violation in violation_flags %}
+                                               <li>Type: {{ violation.get('type', 'N/A') }}, Details: {{ violation.get('details', 'N/A') }}{% if violation.get('question') %}, Question: {{ violation.get('question') }}{% endif %}</li>
+                                          {% endfor %}
+                                      </ul>
+                                  </div>
+                              {% else %}
+                                   <p class="text-muted mb-0">No specific suspicious activity flagged.</p>
+                              {% endif %}
+                         </div>
+                     </div>
+                     {# TODO: Add option for recruiter to manually review answers if needed #}
+                 </div>
+             </div>
+             {% endif %}
+
+        </div>
+        <div class="col-lg-4">
+            {# Potential sidebar for candidate profile summary or other relevant info #}
+            <div class="card">
+                <div class="card-header fw-bold">Candidate Summary</div>
+                <div class="card-body">
+                    <p>Quick summary of the candidate.</p>
+                    {# TODO: Add more candidate info here #}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %} 

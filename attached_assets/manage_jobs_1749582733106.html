@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Jobs - Hirica{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('recruiter_dashboard') }}" class="text-decoration-none">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Manage Jobs</li>
+                </ol>
+            </nav>
+            <h1 class="display-6 fw-bold text-dark mb-2">Manage Jobs</h1>
+            <p class="text-muted">View and manage all your job postings</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('post_job') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Post New Job
+            </a>
+        </div>
+    </div>
+    
+    {% if jobs %}
+    <div class="row g-4">
+        {% for job in jobs %}
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="fw-bold mb-1">{{ job.title }}</h5>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-map-marker-alt me-1"></i>{{ job.location }}
+                                <span class="ms-3">
+                                    <i class="fas fa-briefcase me-1"></i>{{ job.employment_type }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{{ url_for('job_detail', job_id=job.id) }}">
+                                    <i class="fas fa-eye me-2"></i>View Job
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('toggle_job_status', job_id=job.id) }}">
+                                    <i class="fas fa-{{ 'pause' if job.is_active else 'play' }} me-2"></i>
+                                    {{ 'Deactivate' if job.is_active else 'Activate' }}
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <p class="text-muted mb-3">{{ job.description[:150] }}...</p>
+                    
+                    <!-- Skills -->
+                    <div class="mb-3">
+                        <div class="d-flex flex-wrap gap-1">
+                            {% for skill in job.get_skills_list()[:4] %}
+                            <span class="badge bg-light text-dark">{{ skill }}</span>
+                            {% endfor %}
+                            {% if job.get_skills_list()|length > 4 %}
+                            <span class="badge bg-light text-muted">+{{ job.get_skills_list()|length - 4 }} more</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Stats -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-4">
+                            <div class="text-center">
+                                <div class="fw-bold text-primary">{{ job.applications|length }}</div>
+                                <small class="text-muted">Applications</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-center">
+                                <div class="fw-bold text-success">{{ job.applications|selectattr("status", "equalto", "approved")|list|length }}</div>
+                                <small class="text-muted">Approved</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-center">
+                                <div class="fw-bold text-warning">{{ job.applications|selectattr("status", "equalto", "pending")|list|length }}</div>
+                                <small class="text-muted">Pending</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-{{ 'success' if job.is_active else 'secondary' }} me-2">
+                                {{ 'Active' if job.is_active else 'Inactive' }}
+                            </span>
+                            <small class="text-muted">Posted {{ job.created_at.strftime('%b %d, %Y') }}</small>
+                        </div>
+                        <div class="d-flex gap-2">
+                            {% if job.applications|length > 0 %}
+                            <a href="{{ url_for('recruiter_applications') }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-users me-1"></i>View Applications
+                            </a>
+                            {% endif %}
+                            <a href="{{ url_for('toggle_job_status', job_id=job.id) }}" 
+                               class="btn btn-sm btn-{{ 'warning' if job.is_active else 'success' }}">
+                                <i class="fas fa-{{ 'pause' if job.is_active else 'play' }} me-1"></i>
+                                {{ 'Pause' if job.is_active else 'Activate' }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    {% if jobs|length == 0 %}
+    <div class="text-center py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <img src="https://pixabay.com/get/gff86fc89a872b52860c21185c61eb5fdb8c7c9c8e94024907358583fd86834675c9b9fdd7da25b9eb3f6f146ef467091d43375d51b7d1dd9e1d1bc4478e38b83_1280.jpg" 
+                     alt="No jobs yet" class="img-fluid rounded mb-4" style="max-height: 300px; object-fit: cover;">
+                <h3 class="fw-bold text-dark mb-3">No Jobs Posted Yet</h3>
+                <p class="text-muted mb-4">Start building your talent pipeline by posting your first job opening.</p>
+                <a href="{{ url_for('post_job') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>Post Your First Job
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <img src="https://pixabay.com/get/gff86fc89a872b52860c21185c61eb5fdb8c7c9c8e94024907358583fd86834675c9b9fdd7da25b9eb3f6f146ef467091d43375d51b7d1dd9e1d1bc4478e38b83_1280.jpg" 
+                     alt="No jobs yet" class="img-fluid rounded mb-4" style="max-height: 300px; object-fit: cover;">
+                <h3 class="fw-bold text-dark mb-3">No Jobs Posted Yet</h3>
+                <p class="text-muted mb-4">Start building your talent pipeline by posting your first job opening.</p>
+                <a href="{{ url_for('post_job') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>Post Your First Job
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

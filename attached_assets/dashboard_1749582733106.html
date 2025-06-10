@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}Recruiter Dashboard - Hirica{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-6 fw-bold text-dark mb-2">Dashboard</h1>
+            <p class="text-muted">Manage your job postings and applications</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('post_job') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus me-2"></i>Post New Job
+            </a>
+        </div>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="fw-bold mb-1">{{ total_jobs }}</h3>
+                            <p class="mb-0 opacity-75">Total Jobs</p>
+                        </div>
+                        <i class="fas fa-briefcase fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="fw-bold mb-1">{{ active_jobs }}</h3>
+                            <p class="mb-0 opacity-75">Active Jobs</p>
+                        </div>
+                        <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="fw-bold mb-1">{{ total_applications }}</h3>
+                            <p class="mb-0 opacity-75">Applications</p>
+                        </div>
+                        <i class="fas fa-users fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="fw-bold mb-1">{{ applications|selectattr("status", "equalto", "pending")|list|length }}</h3>
+                            <p class="mb-0 opacity-75">Pending Review</p>
+                        </div>
+                        <i class="fas fa-clock fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center p-4">
+                    <div class="bg-primary text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="fas fa-plus fa-lg"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Post New Job</h5>
+                    <p class="text-muted mb-3">Create a new job posting with AI-powered requirements</p>
+                    <a href="{{ url_for('post_job') }}" class="btn btn-primary">Get Started</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center p-4">
+                    <div class="bg-success text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="fas fa-tasks fa-lg"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Manage Jobs</h5>
+                    <p class="text-muted mb-3">Edit, activate, or deactivate your job postings</p>
+                    <a href="{{ url_for('manage_jobs') }}" class="btn btn-success">Manage</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center p-4">
+                    <div class="bg-info text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="fas fa-file-alt fa-lg"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Review Applications</h5>
+                    <p class="text-muted mb-3">View and manage candidate applications</p>
+                    <a href="{{ url_for('recruiter_applications') }}" class="btn btn-info">Review</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Applications -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold mb-0">Recent Applications</h5>
+                        <a href="{{ url_for('recruiter_applications') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if applications %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="border-0 fw-semibold">Candidate</th>
+                                    <th class="border-0 fw-semibold">Job Title</th>
+                                    <th class="border-0 fw-semibold">Applied</th>
+                                    <th class="border-0 fw-semibold">Status</th>
+                                    <th class="border-0 fw-semibold">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for app in applications[:5] %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar bg-primary text-white rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                                                {{ app.applicant.first_name[0] }}{{ app.applicant.last_name[0] }}
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold">{{ app.applicant.get_full_name() }}</div>
+                                                <small class="text-muted">{{ app.applicant.email }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ app.job.title }}</td>
+                                    <td>{{ app.applied_at.strftime('%b %d, %Y') }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if app.status == 'approved' else 'warning' if app.status == 'pending' else 'secondary' }}">
+                                            {{ app.status.replace('_', ' ').title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('recruiter_applications') }}" class="btn btn-sm btn-outline-primary">Review</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No applications yet</h5>
+                        <p class="text-muted">Applications will appear here once candidates start applying to your jobs.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="fw-bold mb-0">Recent Jobs</h5>
+                </div>
+                <div class="card-body">
+                    {% if jobs %}
+                    {% for job in jobs[:3] %}
+                    <div class="d-flex justify-content-between align-items-center {% if not loop.last %}mb-3 pb-3 border-bottom{% endif %}">
+                        <div>
+                            <div class="fw-semibold">{{ job.title }}</div>
+                            <small class="text-muted">{{ job.location }}</small>
+                            <div class="mt-1">
+                                <span class="badge bg-{{ 'success' if job.is_active else 'secondary' }} badge-sm">
+                                    {{ 'Active' if job.is_active else 'Inactive' }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <small class="text-muted d-block">{{ job.applications|length }} applications</small>
+                            <small class="text-muted">{{ job.created_at.strftime('%b %d') }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-briefcase fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">No jobs posted yet</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
