@@ -1,0 +1,12 @@
+14.After finish there would be option to approve, decline, stop. If decline the test cant be take to job seeker. If stop the recuiter can approve it later like it will be paused until their command. If approve, the respective job seeker can take the assessment which includes the tasks and questions which recuiter approved.if recuiter approved, it notify the respective job seeker
+15.Back to job seeker dashboard:there job seeker can see the approved job test assessment in respective places. He can choose the take assessment option.
+16.The instruction page will be loaded. With the specified question type, rules and time for each, permissions.what happen if breaks the rules etc...Then option for take test.
+17.The pages will be loaded for each questions, rules will be on the top of page, if multiple choice it jobseeker can choose the options, if text, there would be specified area for to answer, if its code, the space for area to answer(if possible, we can implement a code complier for that which job seeker can type the specified code and output will be generated. If that give maximum time for job seeker(optional)). Last if recuiter give small project, the job seeker can do that which should submitt in test assessment.
+Job seeker can submit the test.
+18.If recuiter gives big project the job seeker can submitt it by the deadline given bg recuiter.the page should have question of that and space to upload the project. It should be submit and zip file or folder(choose which is relevant). It that should include the screenshot or relevant things of output generated.
+20.Result generation:After test submittion, we need to generate a relevant results for that and it should be seen by jobseeker. If big project is there, the file should be attached in the results, if pending it shows pending only.
+21.Recuiter can see the result of the job seeker with questions and answer and the if projects is there, the file will be also attached and Recuiter can download and open it.
+If project pending, the result page show pending only.
+22.After it recuiter have option for to give a letter or offer letter to job seeker about the next step s, if it call for interview or anthing they can give al letter to jobseeker.it recuiter is not happy, he can decline the offer.
+23.The job seeker can take the tast as retest option, but the recuiter can see its the retest but dont effect any part of result or something
+Note:The assessment question should vary for the job seeker even if he take retest. He nned to follow the each steps that he done before it.
